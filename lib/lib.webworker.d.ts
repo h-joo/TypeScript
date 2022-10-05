@@ -1695,7 +1695,7 @@ interface FormData {
     getAll(name: string): FormDataEntryValue[];
     has(name: string): boolean;
     set(name: string, value: string | Blob, fileName?: string): void;
-    forEach(callbackfn: (value: FormDataEntryValue, key: string, parent: FormData) => void, thisArg?: any): void;
+    forEach<T>(callbackfn: (this: T, value: FormDataEntryValue, key: string, parent: FormData) => void, thisArg?: T): void;
 }
 
 declare var FormData: {
@@ -1715,7 +1715,7 @@ interface Headers {
     get(name: string): string | null;
     has(name: string): boolean;
     set(name: string, value: string): void;
-    forEach(callbackfn: (value: string, key: string, parent: Headers) => void, thisArg?: any): void;
+    forEach<T>(callbackfn: (this: T, value: string, key: string, parent: Headers) => void, thisArg?: T): void;
 }
 
 declare var Headers: {
@@ -3187,7 +3187,7 @@ interface URLSearchParams {
     sort(): void;
     /** Returns a string containing a query string suitable for use in a URL. Does not include the question mark. */
     toString(): string;
-    forEach(callbackfn: (value: string, key: string, parent: URLSearchParams) => void, thisArg?: any): void;
+    forEach<T>(callbackfn: (this: T, value: string, key: string, parent: URLSearchParams) => void, thisArg?: T): void;
 }
 
 declare var URLSearchParams: {
