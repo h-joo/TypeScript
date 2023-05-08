@@ -1,7 +1,6 @@
 import * as ts from "typescript";
 import { NodeBuilderFlags } from "typescript";
 
-import { map } from "../compiler/lang-utils";
 import { SymbolTracker } from "../compiler/types";
 
 const declarationEmitNodeBuilderFlags =
