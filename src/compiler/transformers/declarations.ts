@@ -46,6 +46,7 @@ import {
     EnumDeclaration,
     ExportAssignment,
     ExportDeclaration,
+    Expression,
     ExpressionWithTypeArguments,
     factory,
     FileReference,
@@ -1923,9 +1924,9 @@ export function transformDeclarations(context: TransformationContext) {
                         if (shouldStripInternal(m)) return;
                         if (isolatedDeclarations) {
                             if (
-                                m.initializer && !resolver.isLiteralConstDeclaration(m) &&
+                                m.initializer && (!resolver.isLiteralConstDeclaration(m) && !isExprEnumMember(input, m.initializer))&&
                                 // This will be its own compiler error instead, so don't report.
-                                !isComputedPropertyName(m.name)
+                                !isComputedPropertyName(m.name) 
                             ) {
                                 reportIsolatedDeclarationError(m);
                             }
@@ -1946,6 +1947,32 @@ export function transformDeclarations(context: TransformationContext) {
         }
         // Anything left unhandled is an error, so this should be unreachable
         return Debug.assertNever(input, `Unhandled top-level node in declaration emit: ${Debug.formatSyntaxKind((input as Node).kind)}`);
+
+        function isExprEnumMember(enumDecl: EnumDeclaration, expr: Expression): boolean {
+            let name: __String;
+            if (isIdentifier(expr)) {
+                name = expr.escapedText;
+            }
+            else if (isPropertyAccessExpression(expr)) {
+                if (!isIdentifier(expr.expression) || !isIdentifier(expr.name) ||
+                    enumDecl.name.escapedText !== expr.expression.escapedText ) return false;
+                name = expr.name.escapedText;
+            }
+            else {
+                return false;
+            }
+            return enumDecl.members.some((member) => {
+                let memberName;
+                if (isStringLiteral(member.name)) {
+                    memberName = member.name.text;
+                } else if (isIdentifier(member.name)) {
+                    memberName = member.name.escapedText;
+                } else {
+                    return false;
+                }
+                return memberName === name;
+            });
+        }
 
         function cleanup<T extends Node>(node: T | undefined): T | undefined {
             if (isEnclosingDeclaration(input)) {

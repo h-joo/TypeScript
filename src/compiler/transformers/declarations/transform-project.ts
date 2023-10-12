@@ -57,6 +57,9 @@ export function createIsolatedDeclarationsEmitter(rootDir: string, options: Comp
         if (!source) return;
 
         const actualDeclaration = emitDeclarationsForFile(source, [], [], options);
+        if (actualDeclaration.diagnostics.length > 0) {
+            throw new Error("Cannot transform file with diagnostic errors");
+        }
         const output = declarationDir ? changeAnyExtension(file.replace(rootDir, declarationDir), ".d.ts") :
             changeAnyExtension(file, ".d.ts");
         const dirPath = getDirectoryPath(output);
