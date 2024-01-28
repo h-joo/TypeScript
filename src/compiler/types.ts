@@ -5697,6 +5697,9 @@ export interface CoreEmitResolver {
     getAllAccessorDeclarations(declaration: AccessorDeclaration): AllAccessorDeclarations;
     tryFindAmbientModule(moduleReferenceExpression: Expression): Symbol | undefined;
     getPropertiesOfContainerFunction(node: FunctionDeclaration | VariableDeclaration): Symbol[];
+    createTypeOfDeclaration(declaration: AccessorDeclaration | VariableLikeDeclaration | PropertyAccessExpression | ElementAccessExpression | BinaryExpression, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker, addUndefined?: boolean): TypeNode | undefined;
+    createReturnTypeOfSignatureDeclaration(signatureDeclaration: SignatureDeclaration, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker): TypeNode | undefined;
+    createTypeOfExpression(expr: Expression, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker): TypeNode | undefined;
 }
 /** @internal */
 export interface EmitResolver extends CoreEmitResolver {
@@ -5711,10 +5714,7 @@ export interface EmitResolver extends CoreEmitResolver {
     getNodeCheckFlags(node: Node): NodeCheckFlags;
     collectLinkedAliases(node: Identifier, setVisibility?: boolean): Node[] | undefined;
     isRequiredInitializedParameter(node: ParameterDeclaration): boolean;
-    isOptionalUninitializedParameterProperty(node: ParameterDeclaration): boolean;
-    createTypeOfDeclaration(declaration: AccessorDeclaration | VariableLikeDeclaration | PropertyAccessExpression | ElementAccessExpression | BinaryExpression, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker, addUndefined?: boolean): TypeNode | undefined;
-    createReturnTypeOfSignatureDeclaration(signatureDeclaration: SignatureDeclaration, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker): TypeNode | undefined;
-    createTypeOfExpression(expr: Expression, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker): TypeNode | undefined;
+    isOptionalUninitializedParameterProperty(node: ParameterDeclaration): boolean;    
     isSymbolAccessible(symbol: Symbol, enclosingDeclaration: Node | undefined, meaning: SymbolFlags | undefined, shouldComputeAliasToMarkVisible: boolean): SymbolAccessibilityResult;
     // Returns the constant value this property access resolves to, or 'undefined' for a non-constant
     getReferencedValueDeclaration(reference: Identifier): Declaration | undefined;

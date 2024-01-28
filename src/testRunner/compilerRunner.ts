@@ -704,8 +704,8 @@ class IsolatedDeclarationTest extends CompilerTestBase {
         );
     }
 }
-
-class FixedIsolatedDeclarationTest extends IsolatedDeclarationTest {
+/** @internal */
+export class FixedIsolatedDeclarationTest extends IsolatedDeclarationTest {
     static fixTestProject(compilerEnvironment: CompilerTestEnvironment, shouldNotExclude = !!compilerEnvironment.testCaseContent.settings.isolatedDeclarationFixedDiffReason): CompilerTestEnvironment | undefined {
         if (!shouldNotExclude) {
             // Exclude test that disable types and symbols (good proxy for very complex test)

@@ -568,9 +568,9 @@ declare function makeCompleteLookupMapping<T extends ReadonlyArray<any>, Attr ex
     [Item in T[number] as Item[Attr]]: Item;
 };
 declare const ALL_BARS: readonly [{
-    readonly name: "a";
+    readonly name: 'a';
 }, {
-    readonly name: "b";
+    readonly name: 'b';
 }];
 declare const BAR_LOOKUP: {
     a: {
@@ -602,7 +602,7 @@ type SameKeys<T> = {
     };
 };
 type MappedFromOriginal = SameKeys<Original>;
-declare const getStringAndNumberFromOriginalAndMapped: <K extends keyof Original, N extends keyof Original[K]>(original: Original, mappedFromOriginal: MappedFromOriginal, key: K, nestedKey: N) => [Original[K][N], MappedFromOriginal[K][N]];
+declare const getStringAndNumberFromOriginalAndMapped: <K extends KeyOfOriginal, N extends NestedKeyOfOriginalFor<K>>(original: Original, mappedFromOriginal: MappedFromOriginal, key: K, nestedKey: N) => [Original[K][N], MappedFromOriginal[K][N]];
 interface Config {
     string: string;
     number: number;

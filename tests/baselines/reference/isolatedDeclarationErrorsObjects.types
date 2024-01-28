@@ -238,9 +238,9 @@ export const oWithSpread = {
 }
 
 
-export const oWithSpread = {
->oWithSpread : { [x: string]: number | { a: number; }; b: number; nested: { a: number; }; c: number; part: { a: number; }; }
->{    b: 1,    nested: {        ...part,    },    c: 1,    part,    [str]: 0,} : { [x: string]: number | { a: number; }; b: number; nested: { a: number; }; c: number; part: { a: number; }; }
+export const oWithSpread2 = {
+>oWithSpread2 : { b: number; nested: { a: number; }; c: number; }
+>{    b: 1,    nested: {        ...part,    },    c: 1,} : { b: number; nested: { a: number; }; c: number; }
 
     b: 1,
 >b : number
@@ -257,13 +257,5 @@ export const oWithSpread = {
     c: 1,
 >c : number
 >1 : 1
-
-    part,
->part : { a: number; }
-
-    [str]: 0,
->[str] : number
->str : string
->0 : 0
 }
 

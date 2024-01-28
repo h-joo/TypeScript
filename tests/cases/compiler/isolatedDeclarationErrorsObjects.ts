@@ -86,12 +86,10 @@ export const oWithSpread = {
 }
 
 
-export const oWithSpread = {
+export const oWithSpread2 = {
     b: 1,
     nested: {
         ...part,
     },
     c: 1,
-    part,
-    [str]: 0,
 }

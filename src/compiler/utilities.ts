@@ -11126,6 +11126,18 @@ export function createEntityVisibilityChecker({ isDeclarationVisible, isThisAcce
             return { accessibility: SymbolAccessibility.Accessible };
         }
 
+        if(symbol
+            && (isFunctionExpressionOrArrowFunction(enclosingDeclaration) || isMethodDeclaration(enclosingDeclaration))
+            && symbol.flags & SymbolFlags.FunctionScopedVariable
+            && symbol.valueDeclaration) {
+            const parameter = 
+                symbol.valueDeclaration.kind === SyntaxKind.Parameter? symbol.valueDeclaration:
+                findAncestor(symbol.valueDeclaration, n => n.kind === SyntaxKind.Parameter || enclosingDeclaration === n);
+            if(parameter?.parent === enclosingDeclaration) {
+                return { accessibility: SymbolAccessibility.Accessible };
+            }
+        }
+
         if (!symbol && isThisIdentifier(firstIdentifier) && isThisAccessible(firstIdentifier, meaning).accessibility === SymbolAccessibility.Accessible) {
             return { accessibility: SymbolAccessibility.Accessible };
         }

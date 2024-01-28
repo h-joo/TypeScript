@@ -81,14 +81,12 @@ export const oWithSpread = {
 }
 
 
-export const oWithSpread = {
+export const oWithSpread2 = {
     b: 1,
     nested: {
         ...part,
     },
     c: 1,
-    part,
-    [str]: 0,
 }
 
 
@@ -159,12 +157,10 @@ export const oWithSpread = {
     c: 1,
     part,
 };
-export const oWithSpread = {
+export const oWithSpread2 = {
     b: 1,
     nested: {
         ...part,
     },
     c: 1,
-    part,
-    [str]: 0,
 };

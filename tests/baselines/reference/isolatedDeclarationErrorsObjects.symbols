@@ -199,11 +199,11 @@ export const oWithSpread = {
 }
 
 
-export const oWithSpread = {
->oWithSpread : Symbol(oWithSpread, Decl(isolatedDeclarationErrorsObjects.ts, 80, 12))
+export const oWithSpread2 = {
+>oWithSpread2 : Symbol(oWithSpread2, Decl(isolatedDeclarationErrorsObjects.ts, 80, 12))
 
     b: 1,
->b : Symbol(b, Decl(isolatedDeclarationErrorsObjects.ts, 80, 28))
+>b : Symbol(b, Decl(isolatedDeclarationErrorsObjects.ts, 80, 29))
 
     nested: {
 >nested : Symbol(nested, Decl(isolatedDeclarationErrorsObjects.ts, 81, 9))
@@ -214,12 +214,5 @@ export const oWithSpread = {
     },
     c: 1,
 >c : Symbol(c, Decl(isolatedDeclarationErrorsObjects.ts, 84, 6))
-
-    part,
->part : Symbol(part, Decl(isolatedDeclarationErrorsObjects.ts, 85, 9))
-
-    [str]: 0,
->[str] : Symbol([str], Decl(isolatedDeclarationErrorsObjects.ts, 86, 9))
->str : Symbol(str, Decl(isolatedDeclarationErrorsObjects.ts, 57, 5))
 }
 

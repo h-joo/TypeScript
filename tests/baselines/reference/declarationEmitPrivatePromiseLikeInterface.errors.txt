@@ -1,6 +1,6 @@
-Api.ts(6,5): error TS7056: The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
-Api.ts(7,5): error TS7056: The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
-Api.ts(8,5): error TS7056: The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
+Api.ts(6,12): error TS7056: The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
+Api.ts(7,12): error TS7056: The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
+Api.ts(8,12): error TS7056: The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
 
 
 ==== http-client.ts (0 errors) ====
@@ -31,12 +31,12 @@ Api.ts(8,5): error TS7056: The inferred type of this node exceeds the maximum le
         constructor(private http: HttpClient<SecurityDataType>) { }
     
         abc1 = () => this.http.request();
-        ~~~~
+               ~~~~~~~~~~~~~~~~~~~~~~~~~
 !!! error TS7056: The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
         abc2 = () => this.http.request();
-        ~~~~
+               ~~~~~~~~~~~~~~~~~~~~~~~~~
 !!! error TS7056: The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
         abc3 = () => this.http.request();
-        ~~~~
+               ~~~~~~~~~~~~~~~~~~~~~~~~~
 !!! error TS7056: The inferred type of this node exceeds the maximum length the compiler will serialize. An explicit type annotation is needed.
     }

@@ -48,6 +48,6 @@ exports.default = uses_js_1.default;
 declare const _default: RequireInterface;
 export default _default;
 //// [index.d.ts]
-/// <reference types="pkg" />
-declare const _default: RequireInterface;
+import obj from "./uses.js";
+declare const _default: typeof obj;
 export default _default;

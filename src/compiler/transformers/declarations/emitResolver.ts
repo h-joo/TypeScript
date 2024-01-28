@@ -459,6 +459,15 @@ export function createEmitDeclarationResolver(file: SourceFile, options: Compile
     }
 
     return {
+        createTypeOfDeclaration() {
+            return factory.createTypeReferenceNode("invalid");
+        },
+        createReturnTypeOfSignatureDeclaration() {
+            return factory.createTypeReferenceNode("invalid");
+        },
+        createTypeOfExpression() {
+            return factory.createTypeReferenceNode("invalid");
+        },
         isDeclarationVisible,
         isLiteralConstDeclaration,
         isLiteralComputedName,
