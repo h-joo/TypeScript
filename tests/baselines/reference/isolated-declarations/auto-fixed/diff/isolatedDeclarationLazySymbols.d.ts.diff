@@ -5,7 +5,7 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -1,11 +1,8 @@
+@@ -1,11 +1,9 @@
  
  
  //// [isolatedDeclarationLazySymbols.d.ts]
@@ -13,11 +13,12 @@
 -export declare namespace foo {
 -    var b: string;
 -}
++export declare namespace foo { }
  declare const o: {
-     readonly "prop.inner": "a";
+     readonly ["prop.inner"]: "a";
      readonly prop: {
          readonly inner: "b";
-@@ -20,12 +17,13 @@
+@@ -20,12 +18,13 @@
  export {};
  //# sourceMappingURL=isolatedDeclarationLazySymbols.d.ts.map
  /// [Errors] ////
@@ -32,7 +33,7 @@
      
      }
      
-@@ -37,8 +35,10 @@
+@@ -37,8 +36,10 @@
      } as const
      
      foo[o["prop.inner"]] ="A";

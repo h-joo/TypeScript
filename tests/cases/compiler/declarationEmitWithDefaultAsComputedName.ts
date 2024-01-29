@@ -1,7 +1,5 @@
 // @declaration: true
 // @target: es5
-// @isolatedDeclarationDiffReason: Computed property are not resolved
-// @isolatedDeclarationFixedDiffReason: Printing differences
 
 // @filename: other.ts
 type Experiment<Name> = {

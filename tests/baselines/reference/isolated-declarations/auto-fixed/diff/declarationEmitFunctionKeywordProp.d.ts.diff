@@ -5,28 +5,32 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -1,20 +1,37 @@
- 
+@@ -2,19 +2,49 @@
  
  //// [declarationEmitFunctionKeywordProp.d.ts]
  declare function foo(): void;
--declare namespace foo {
+ declare namespace foo {
 -    var _a: boolean;
--    export { _a as null };
--}
++    var _a: invalid;
+     export { _a as null };
+ }
  declare function bar(): void;
--declare namespace bar {
+ declare namespace bar {
 -    var async: boolean;
 -    var normal: boolean;
--}
++    var async: invalid;
++    var normal: invalid;
+ }
  declare function baz(): void;
--declare namespace baz {
+ declare namespace baz {
 -    var _a: boolean;
 -    export var normal: boolean;
--    export { _a as class };
--}
--//# sourceMappingURL=declarationEmitFunctionKeywordProp.d.ts.map
 \ No newline at end of file
++    var _a: invalid;
++    export var normal: invalid;
+     export { _a as class };
+ }
+-//# sourceMappingURL=declarationEmitFunctionKeywordProp.d.ts.map
 +//# sourceMappingURL=declarationEmitFunctionKeywordProp.d.ts.map
 +/// [Errors] ////
 +

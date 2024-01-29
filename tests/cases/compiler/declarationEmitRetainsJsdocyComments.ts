@@ -1,5 +1,4 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 /**
  * comment1
  * @param p 

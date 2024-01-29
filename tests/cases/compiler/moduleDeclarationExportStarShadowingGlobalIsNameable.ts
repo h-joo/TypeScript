@@ -1,5 +1,4 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 // @filename: model/index.ts
 export * from "./account";
 

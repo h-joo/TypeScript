@@ -1,5 +1,5 @@
 declarationFiles.ts(4,20): error TS2526: A 'this' type is available only in a non-static member of a class or interface.
-declarationFiles.ts(30,5): error TS2527: The inferred type of 'x1' references an inaccessible 'this' type. A type annotation is necessary.
+declarationFiles.ts(30,12): error TS2527: The inferred type of 'a' references an inaccessible 'this' type. A type annotation is necessary.
 declarationFiles.ts(32,5): error TS2527: The inferred type of 'x3' references an inaccessible 'this' type. A type annotation is necessary.
 declarationFiles.ts(34,5): error TS2527: The inferred type of 'f1' references an inaccessible 'this' type. A type annotation is necessary.
 declarationFiles.ts(40,5): error TS2527: The inferred type of 'f3' references an inaccessible 'this' type. A type annotation is necessary.
@@ -38,8 +38,8 @@ declarationFiles.ts(40,5): error TS2527: The inferred type of 'f3' references an
     
     class C4 {
         x1 = { a: this };
-        ~~
-!!! error TS2527: The inferred type of 'x1' references an inaccessible 'this' type. A type annotation is necessary.
+               ~
+!!! error TS2527: The inferred type of 'a' references an inaccessible 'this' type. A type annotation is necessary.
         x2 = [this];
         x3 = [{ a: this }];
         ~~

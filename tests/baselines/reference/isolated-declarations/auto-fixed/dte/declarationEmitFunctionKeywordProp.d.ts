@@ -18,8 +18,21 @@ baz.normal = false;
 
 //// [declarationEmitFunctionKeywordProp.d.ts]
 declare function foo(): void;
+declare namespace foo {
+    var _a: invalid;
+    export { _a as null };
+}
 declare function bar(): void;
+declare namespace bar {
+    var async: invalid;
+    var normal: invalid;
+}
 declare function baz(): void;
+declare namespace baz {
+    var _a: invalid;
+    export var normal: invalid;
+    export { _a as class };
+}
 //# sourceMappingURL=declarationEmitFunctionKeywordProp.d.ts.map
 /// [Errors] ////
 

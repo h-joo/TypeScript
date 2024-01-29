@@ -5,16 +5,16 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -2,8 +2,21 @@
- 
+@@ -3,7 +3,23 @@
  //// [declarationEmitFunctionDuplicateNamespace.d.ts]
  declare function f(a: 0): 0;
  declare function f(a: 1): 1;
--declare namespace f {
+ declare namespace f {
 -    var x: number;
--}
--//# sourceMappingURL=declarationEmitFunctionDuplicateNamespace.d.ts.map
++    var x: invalid;
+ }
 \ No newline at end of file
+-//# sourceMappingURL=declarationEmitFunctionDuplicateNamespace.d.ts.map
 +//# sourceMappingURL=declarationEmitFunctionDuplicateNamespace.d.ts.map
 +/// [Errors] ////
 +

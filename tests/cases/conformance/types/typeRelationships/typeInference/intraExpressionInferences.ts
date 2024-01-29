@@ -1,6 +1,5 @@
 // @strict: true
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 
 // Repros from #47599
 

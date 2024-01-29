@@ -5,13 +5,16 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -5,20 +5,26 @@
+@@ -5,20 +5,29 @@
  }
  export declare function f(): I;
  export {};
  //# sourceMappingURL=a.d.ts.map
 +//// [b.d.ts]
 +export declare function q(): void;
++export declare namespace q {
++    var val: invalid;
++}
 +//# sourceMappingURL=b.d.ts.map
  /// [Errors] ////
  

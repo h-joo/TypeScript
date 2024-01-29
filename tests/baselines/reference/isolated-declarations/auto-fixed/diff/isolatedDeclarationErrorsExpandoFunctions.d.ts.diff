@@ -5,19 +5,24 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -1,12 +1,38 @@
- 
+@@ -2,11 +2,45 @@
  
  //// [isolatedDeclarationErrorsExpandoFunctions.d.ts]
  export declare function foo(): void;
--export declare namespace foo {
+ export declare namespace foo {
 -    var apply: () => void;
 -    var call: () => void;
 -    var bind: () => void;
 -    var caller: () => void;
 -    var toString: () => void;
 -    var length: number;
--}
++    var apply: invalid;
++    var call: invalid;
++    var bind: invalid;
++    var caller: invalid;
++    var toString: invalid;
++    var length: invalid;
+ }
 +
 +/// [Errors] ////
 +

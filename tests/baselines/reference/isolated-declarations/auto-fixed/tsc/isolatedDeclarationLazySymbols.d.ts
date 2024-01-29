@@ -38,7 +38,7 @@ export declare namespace foo {
     var b: string;
 }
 declare const o: {
-    readonly "prop.inner": "a";
+    readonly ["prop.inner"]: "a";
     readonly prop: {
         readonly inner: "b";
     };

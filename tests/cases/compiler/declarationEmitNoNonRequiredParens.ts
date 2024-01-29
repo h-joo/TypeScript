@@ -1,6 +1,4 @@
 // @declaration: true
-// @isolatedDeclarationDiffReason: TS normalizes types
-// @isolatedDeclarationFixedDiffReason: Printing differences
 export enum Test {
     A, B, C
 }

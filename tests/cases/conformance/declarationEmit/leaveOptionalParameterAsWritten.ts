@@ -3,7 +3,6 @@
 // @declaration: true
 // @emitDeclarationOnly: true
 // @strictNullChecks: true
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 
 // @Filename: a.ts
 export interface Foo {}

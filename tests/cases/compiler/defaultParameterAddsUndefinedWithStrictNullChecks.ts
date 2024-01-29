@@ -1,6 +1,5 @@
 // @strictNullChecks: true
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 function f(addUndefined1 = "J", addUndefined2?: number) {
     return addUndefined1.length + (addUndefined2 || 0);
 }

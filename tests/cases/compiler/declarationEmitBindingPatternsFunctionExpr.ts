@@ -1,7 +1,6 @@
 // @declaration: true
 // @target: esnext
 // @skipLibCheck: false
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 
 type Named = { name: string }
 // Tempting to remove alias if unused 

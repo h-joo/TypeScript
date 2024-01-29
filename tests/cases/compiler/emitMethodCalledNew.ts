@@ -1,5 +1,4 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Source maps difference.
 
 // https://github.com/microsoft/TypeScript/issues/55075
 

@@ -1,6 +1,5 @@
 // @declaration: true
 // @lib: dom,es6
-// @isolatedDeclarationFixedDiffReason: Printing differences
 // @filename: dom.ts
 export type DOMNode = Node;
 // @filename: custom.ts

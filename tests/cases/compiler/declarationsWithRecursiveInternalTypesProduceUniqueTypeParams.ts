@@ -1,6 +1,5 @@
 // @declaration: true
 // @lib: es6
-// @isolatedDeclarationFixedDiffReason: Type expansion of infinite type becomes different, but both are technically the same type
 
 // Note that both of the following have an `any` in their return type from where we bottom out the type printout
 // for having too many instances of the same symbol nesting.

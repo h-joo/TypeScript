@@ -1,6 +1,5 @@
 // @declaration: true
 // @target: ESNext
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 type N = "not used";
 const N = "not used"
 export type F = <N>() => N;

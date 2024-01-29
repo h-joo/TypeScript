@@ -18,6 +18,14 @@ foo.length = 10
 
 //// [isolatedDeclarationErrorsExpandoFunctions.d.ts]
 export declare function foo(): void;
+export declare namespace foo {
+    var apply: invalid;
+    var call: invalid;
+    var bind: invalid;
+    var caller: invalid;
+    var toString: invalid;
+    var length: invalid;
+}
 
 /// [Errors] ////
 

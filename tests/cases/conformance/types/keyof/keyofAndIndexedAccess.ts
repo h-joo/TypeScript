@@ -1,6 +1,5 @@
 // @strictNullChecks: true
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Printing differences
 
 class Shape {
     name: string;

@@ -1,6 +1,4 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Printing differences
-// @isolatedDeclarationDiffReason: TS normalizes types
 
 export type Segment = [length: number, count: number];
 

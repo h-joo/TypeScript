@@ -1,5 +1,4 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Printing differences
 // @filename: EnumExample.ts
 enum EnumExample {
     TEST = 'TEST',

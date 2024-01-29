@@ -1,5 +1,4 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 export interface Point {
     readonly x: number;
     readonly y: number;

@@ -1,7 +1,5 @@
 // @declaration: true
 // @isolatedDeclarations: true 
-// @isolatedDeclarationDiffReason: Invalid computed property can only be detected by TSC
-// @isolatedDeclarationFixedDiffReason: Accessors are not unified in DTE
 // @declarationMap: false
 // @strict: true
 // @target: ESNext

@@ -1,5 +1,4 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 
 // @Filename: button.ts
 import {classMap} from './lit.js';

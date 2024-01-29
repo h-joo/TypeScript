@@ -5,18 +5,18 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -1,16 +1,36 @@
- 
+@@ -2,9 +2,9 @@
  
  //// [isolatedDeclarationErrors.d.ts]
  declare function errorOnAssignmentBelowDecl(): void;
--declare namespace errorOnAssignmentBelowDecl {
+ declare namespace errorOnAssignmentBelowDecl {
 -    var a: string;
--}
++    var a: invalid;
+ }
  declare const errorOnAssignmentBelow: {
      (): void;
      a: string;
- };
+@@ -12,5 +12,28 @@
  declare const errorOnMissingReturn: {
      (): void;
      a: string;
@@ -44,7 +44,7 @@
 +    const errorOnMissingReturn: {
 +        (): void;
 +        a: string;
-+    } = (): void => {}
++    } = () => {}
 +    errorOnMissingReturn.a = "";
 +    
 \ No newline at end of file

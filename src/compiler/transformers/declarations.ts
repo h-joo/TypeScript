@@ -347,7 +347,7 @@ export function transformDeclarations(context: TransformationContext | IsolatedT
     let libs: Map<string, boolean>;
     let emittedImports: readonly AnyImportSyntax[] | undefined; // must be declared in container so it can be `undefined` while transformer's first pass
     const options = context.getCompilerOptions();
-    const { noResolve, stripInternal, isolatedDeclarations } = options;
+    const { noResolve, stripInternal, isolatedDeclarations, isolatedDeclarationsNoFallback } = options;
     const transformInitializerToTypeNode = initializerToTypeTransformer()
     return transformRoot;
 
@@ -1675,6 +1675,9 @@ export function transformDeclarations(context: TransformationContext | IsolatedT
                                 ));
                             }
                         });
+                        if(isolatedDeclarationsNoFallback) {
+                            return clean;
+                        }
                     }
                     // Use parseNodeFactory so it is usable as an enclosing declaration
                     const fakespace = parseNodeFactory.createModuleDeclaration(/*modifiers*/ undefined, clean.name || factory.createIdentifier("_default"), factory.createModuleBlock([]), NodeFlags.Namespace);
@@ -1691,7 +1694,7 @@ export function transformDeclarations(context: TransformationContext | IsolatedT
                             return undefined; // unique symbol or non-identifier name - omit, since there's no syntax that can preserve it
                         }
                         getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNode(p.valueDeclaration);
-                        const type = resolver.createTypeOfDeclaration(p.valueDeclaration, fakespace, declarationEmitNodeBuilderFlags, symbolTracker);
+                        const type = isolatedDeclarationsNoFallback? makeInvalidType(): resolver.createTypeOfDeclaration(p.valueDeclaration, fakespace, declarationEmitNodeBuilderFlags, symbolTracker);
                         getSymbolAccessibilityDiagnostic = oldDiag;
                         const isNonContextualKeywordName = isStringANonContextualKeyword(nameStr);
                         const name = isNonContextualKeywordName ? factory.getGeneratedNameForNode(p.valueDeclaration) : factory.createIdentifier(nameStr);
@@ -2318,8 +2321,14 @@ export function transformDeclarations(context: TransformationContext | IsolatedT
             return typeInferenceFallback(node, createExpressionError(node));
         }
         function typeInferenceFallback(node: Node, diagMessage?: DiagnosticWithLocation): TypeNode {
+            if(isolatedDeclarationsNoFallback) {
+                if(diagMessage) {
+                    reportError(node, diagMessage);
+                }
+                return makeInvalidType();
+            }
             const type = typeInferenceFallbackWorker(node);
-            if(!type && diagMessage) {
+            if(isolatedDeclarations && diagMessage) {
                 reportError(node, diagMessage);
             }
             return type ?? makeInvalidType();
@@ -2373,16 +2382,26 @@ export function transformDeclarations(context: TransformationContext | IsolatedT
             enclosingDeclaration = oldEnclosingDeclaration;
             return fnTypeNode;
         }
+        function canGetTypeFromArrayLiteral(arrayLiteral: ArrayLiteralExpression) {
+            for (const element of arrayLiteral.elements) {
+                if (isSpreadElement(element)) {
+                    reportError(element, createArrayLiteralError(element));
+                    return false;
+                }
+            }
+            return true
+        }
         function transformArrayLiteralToType(arrayLiteral: ArrayLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
             if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConst)) {
                 return typeInferenceFallback(arrayLiteral, createArrayLiteralError(arrayLiteral));
             }
+            if(!canGetTypeFromArrayLiteral(arrayLiteral)) {
+                return typeInferenceFallback(arrayLiteral);
+            }
             const elementTypesInfo: TypeNode[] = [];
             for (const element of arrayLiteral.elements) {
-                if (isSpreadElement(element)) {
-                    return typeInferenceFallback(element, createArrayLiteralError(element));
-                }
-                else if (isOmittedExpression(element)) {
+                Debug.assert(!isSpreadElement(element));
+                if (isOmittedExpression(element)) {
                     elementTypesInfo.push(
                         createUndefinedTypeNode(),
                     );

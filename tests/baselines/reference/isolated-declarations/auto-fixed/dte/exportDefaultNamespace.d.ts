@@ -13,7 +13,11 @@ someFunc.someProp = 'yo';
 
 
 //// [exportDefaultNamespace.d.ts]
-export default function someFunc(): string;
+declare function someFunc(): string;
+declare namespace someFunc {
+    var someProp: invalid;
+}
+export default someFunc;
 //# sourceMappingURL=exportDefaultNamespace.d.ts.map
 /// [Errors] ////
 

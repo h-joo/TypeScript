@@ -65,7 +65,7 @@ export declare let o2: {
     [y]: number;
 };
 export declare let o3: {
-    1: number;
+    [1]: number;
 };
 export declare let o31: {
     [-1]: number;

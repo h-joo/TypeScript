@@ -5,7 +5,7 @@
 // @lib: es2019
 
 // @Filename: /code.ts
-////const u = Symbol();
+////const u: unique symbol = Symbol();
 ////export const fn = () => ({ u } as const);
 
 verify.codeFix({
@@ -13,7 +13,7 @@ verify.codeFix({
 `Add return type '{ readonly u: typeof u; }'` ,
     index: 0,
     newFileContent:
-`const u = Symbol();
+`const u: unique symbol = Symbol();
 export const fn = (): {
     readonly u: typeof u;
 } => ({ u } as const);`

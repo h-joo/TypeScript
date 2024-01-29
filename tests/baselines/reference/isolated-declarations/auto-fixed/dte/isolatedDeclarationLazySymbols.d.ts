@@ -34,8 +34,9 @@ export let oo: {
 
 //// [isolatedDeclarationLazySymbols.d.ts]
 export declare function foo(): void;
+export declare namespace foo { }
 declare const o: {
-    readonly "prop.inner": "a";
+    readonly ["prop.inner"]: "a";
     readonly prop: {
         readonly inner: "b";
     };

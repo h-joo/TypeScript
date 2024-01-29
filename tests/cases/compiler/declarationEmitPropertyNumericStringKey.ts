@@ -1,6 +1,4 @@
 // @declaration: true
-// @isolatedDeclarationDiffReason: Computed property are not resolved
-// @isolatedDeclarationFixedDiffReason: Printing differences
 
 // https://github.com/microsoft/TypeScript/issues/55292
 

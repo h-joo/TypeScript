@@ -5,39 +5,24 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -1,31 +1,17 @@
- 
+@@ -2,14 +2,12 @@
  
  //// [declarationEmitLateBoundAssignments2.d.ts]
  export declare function decl(): void;
--export declare namespace decl {
+ export declare namespace decl {
 -    var B: string;
--}
++    var B: invalid;
+ }
  export declare function decl2(): void;
 -export declare namespace decl2 {
 -    var C: number;
 -}
++export declare namespace decl2 { }
  export declare function decl3(): void;
--export declare namespace decl3 { }
+ export declare namespace decl3 { }
  export declare function decl4(): void;
--export declare namespace decl4 { }
- export declare function decl5(): void;
--export declare namespace decl5 { }
- export declare function decl6(): void;
--export declare namespace decl6 { }
- export declare function decl7(): void;
--export declare namespace decl7 { }
- export declare function decl8(): void;
--export declare namespace decl8 { }
- export declare function decl9(): void;
--export declare namespace decl9 { }
- export declare function decl10(): void;
--export declare namespace decl10 { }
- export declare const arrow: {
-     (): void;
-     B: string;
- };
-@@ -64,5 +50,138 @@
+ export declare namespace decl4 { }
+@@ -64,5 +62,138 @@
  export declare const arrow10: {
      (): void;
      "🤷‍♂️": number;
@@ -121,61 +106,61 @@
 +    export const arrow: {
 +        (): void
 +        B: string
-+    } = (): void => {}
++    } = () => {}
 +    arrow["B"] = 'bar'
 +    
 +    export const arrow2: {
 +        (): void
 +        C: number
-+    } = (): void => {}
++    } = () => {}
 +    arrow2[c] = 100
 +    
 +    export const arrow3: {
 +        (): void
 +        77: number
-+    } = (): void => {}
++    } = () => {}
 +    arrow3[77] = 0
 +    
 +    export const arrow4: {
 +        (): void
 +        1: number
-+    } = (): void => {}
++    } = () => {}
 +    arrow4[num] = 0
 +    
 +    export const arrow5: {
 +        (): void
 +        "101": number
-+    } = (): void => {}
++    } = () => {}
 +    arrow5["101"] = 0
 +    
 +    export const arrow6: {
 +        (): void
 +        "10": number
-+    } = (): void => {}
++    } = () => {}
 +    arrow6[numStr] = 0
 +    
 +    export const arrow7: {
 +        (): void
 +        "qwe rty": number
-+    } = (): void => {}
++    } = () => {}
 +    arrow7["qwe rty"] = 0
 +    
 +    export const arrow8: {
 +        (): void
 +        "foo bar": number
-+    } = (): void => {}
++    } = () => {}
 +    arrow8[withWhitespace] = 0
 +    
 +    export const arrow9: {
 +        (): void
 +        "🤪": number
-+    } = (): void => {}
++    } = () => {}
 +    arrow9["🤪"] = 0
 +    
 +    export const arrow10: {
 +        (): void
 +        "🤷‍♂️": number
-+    } = (): void => {}
++    } = () => {}
 +    arrow10[emoji] = 0
 +    
 \ No newline at end of file

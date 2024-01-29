@@ -56,19 +56,25 @@ export const o9 = {
 
 
 //// [computedPropertiesNarrowed.d.ts]
-export declare let o: invalid;
+declare const x: 0 | 1;
+export declare let o: {
+    [x]: number;
+};
 declare const y: 0;
 export declare let o2: {
-    0: number;
+    [y]: number;
 };
 export declare let o3: {
-    1: number;
+    [1]: number;
 };
 export declare let o31: {
     [-1]: number;
 };
 export declare let o32: invalid;
-export declare let o4: invalid;
+declare let u: invalid;
+export declare let o4: {
+    [u]: number;
+};
 export declare let o5: invalid;
 declare const uu: unique symbol;
 export declare let o6: {
@@ -79,7 +85,7 @@ declare let E: {
     readonly A: 1;
 };
 export declare const o8: {
-    1: number;
+    [E.A]: number;
 };
 export declare const o9: invalid;
 export {};
@@ -88,13 +94,14 @@ export {};
 
 computedPropertiesNarrowed.ts(5,5): error TS9014: Computed properties must be number or string literals, variables or dotted expressions with --isolatedDeclarations.
 computedPropertiesNarrowed.ts(18,20): error TS9014: Computed properties must be number or string literals, variables or dotted expressions with --isolatedDeclarations.
+computedPropertiesNarrowed.ts(20,9): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 computedPropertiesNarrowed.ts(22,5): error TS9014: Computed properties must be number or string literals, variables or dotted expressions with --isolatedDeclarations.
 computedPropertiesNarrowed.ts(26,5): error TS9014: Computed properties must be number or string literals, variables or dotted expressions with --isolatedDeclarations.
 computedPropertiesNarrowed.ts(37,5): error TS9014: Computed properties must be number or string literals, variables or dotted expressions with --isolatedDeclarations.
 computedPropertiesNarrowed.ts(47,5): error TS9014: Computed properties must be number or string literals, variables or dotted expressions with --isolatedDeclarations.
 
 
-==== computedPropertiesNarrowed.ts (6 errors) ====
+==== computedPropertiesNarrowed.ts (7 errors) ====
     const x: 0 | 1 = Math.random()? 0: 1;
     declare function assert(n: number): asserts n is 1;
     assert(x);
@@ -121,6 +128,9 @@ computedPropertiesNarrowed.ts(47,5): error TS9014: Computed properties must be n
 !!! related TS9027 computedPropertiesNarrowed.ts:18:12: Add a type annotation to the variable o32.
     
     let u = Symbol();
+            ~~~~~~~~
+!!! error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+!!! related TS9027 computedPropertiesNarrowed.ts:20:5: Add a type annotation to the variable u.
     export let o4 = {
         [u]: 1 // Should error, nut a unique symbol
         ~~~

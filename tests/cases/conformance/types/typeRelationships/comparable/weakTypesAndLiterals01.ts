@@ -1,7 +1,6 @@
 // @strict: true
 // @declaration: true
 // @emitDeclarationOnly: true
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 
 type WeakTypes =
     | { optional?: true; }

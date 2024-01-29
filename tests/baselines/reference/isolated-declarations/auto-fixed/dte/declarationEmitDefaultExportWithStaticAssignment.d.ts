@@ -41,20 +41,36 @@ export declare class Foo {
 }
 //# sourceMappingURL=foo.d.ts.map
 //// [index1.d.ts]
-export default function Example(): void;
+declare function Example(): void;
+declare namespace Example {
+    var Foo: invalid;
+}
+export default Example;
 //# sourceMappingURL=index1.d.ts.map
 //// [index2.d.ts]
 import { Foo } from './foo';
 export { Foo };
-export default function Example(): void;
+declare function Example(): void;
+declare namespace Example {
+    var Foo: invalid;
+}
+export default Example;
 //# sourceMappingURL=index2.d.ts.map
 //// [index3.d.ts]
 export declare class Bar {
 }
-export default function Example(): void;
+declare function Example(): void;
+declare namespace Example {
+    var Bar: invalid;
+}
+export default Example;
 //# sourceMappingURL=index3.d.ts.map
 //// [index4.d.ts]
 export declare function C(): any;
+export declare namespace C {
+    var A: invalid;
+    var B: invalid;
+}
 //# sourceMappingURL=index4.d.ts.map
 /// [Errors] ////
 

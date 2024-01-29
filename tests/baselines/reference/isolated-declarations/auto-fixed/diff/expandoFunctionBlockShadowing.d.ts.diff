@@ -5,16 +5,16 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -2,8 +2,31 @@
- 
+@@ -3,7 +3,33 @@
  //// [expandoFunctionBlockShadowing.d.ts]
  export declare function X(): void;
  export declare function Y(): void;
--export declare namespace Y {
+ export declare namespace Y {
 -    var test: string;
--}
--//# sourceMappingURL=expandoFunctionBlockShadowing.d.ts.map
++    var test: invalid;
+ }
 \ No newline at end of file
+-//# sourceMappingURL=expandoFunctionBlockShadowing.d.ts.map
 +//# sourceMappingURL=expandoFunctionBlockShadowing.d.ts.map
 +/// [Errors] ////
 +

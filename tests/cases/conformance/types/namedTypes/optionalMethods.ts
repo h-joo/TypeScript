@@ -1,6 +1,5 @@
 // @strictNullChecks: true
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 
 interface Foo {
     a: number;

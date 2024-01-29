@@ -13,7 +13,7 @@ errorOnAssignmentBelow.a = "";
 const errorOnMissingReturn: {
     (): void;
     a: string;
-} = (): void => {}
+} = () => {}
 errorOnMissingReturn.a = "";
 
 
@@ -23,6 +23,9 @@ errorOnMissingReturn.a = "";
 
 //// [isolatedDeclarationErrors.d.ts]
 declare function errorOnAssignmentBelowDecl(): void;
+declare namespace errorOnAssignmentBelowDecl {
+    var a: invalid;
+}
 declare const errorOnAssignmentBelow: {
     (): void;
     a: string;
@@ -52,6 +55,6 @@ isolatedDeclarationErrors.ts(2,1): error TS9023: Assigning properties to functio
     const errorOnMissingReturn: {
         (): void;
         a: string;
-    } = (): void => {}
+    } = () => {}
     errorOnMissingReturn.a = "";
     

@@ -5,48 +5,47 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -1,12 +1,8 @@
- 
+@@ -2,10 +2,10 @@
  
  //// [typeFromPropertyAssignment29.d.ts]
  declare function ExpandoDecl(n: number): string;
--declare namespace ExpandoDecl {
+ declare namespace ExpandoDecl {
 -    var prop: number;
 -    var m: (n: number) => number;
--}
++    var prop: invalid;
++    var m: invalid;
+ }
  declare var n: number;
  declare const ExpandoExpr: {
      (n: number): string;
-     prop: {
-@@ -27,27 +23,18 @@
- declare function ExpandoNested(n: number): {
+@@ -28,13 +28,13 @@
      (m: number): number;
      total: number;
  };
--declare namespace ExpandoNested {
+ declare namespace ExpandoNested {
 -    var also: number;
--}
++    var also: invalid;
+ }
  declare function ExpandoMerge(n: number): number;
  declare namespace ExpandoMerge {
 -    var p1: number;
--}
--declare namespace ExpandoMerge {
-     var p2: number;
++    var p1: invalid;
  }
  declare namespace ExpandoMerge {
-     var p3: number;
+     var p2: number;
  }
+@@ -44,9 +44,9 @@
  declare var n: number;
  declare namespace Ns {
      function ExpandoNamespace(): void;
--    namespace ExpandoNamespace {
+     namespace ExpandoNamespace {
 -        var p6: number;
--    }
++        var p6: invalid;
+     }
      export function foo(): typeof ExpandoNamespace;
      export {};
  }
- declare var ExpandoExpr2: (n: number) => string;
-@@ -55,37 +42,43 @@
+@@ -55,37 +55,43 @@
  declare class ExpandoClass {
      n: number;
  }
@@ -96,7 +95,7 @@
      }
      var n: number = ExpandoDecl.prop + ExpandoDecl.m(12) + ExpandoDecl(101).length
      
-@@ -130,13 +123,17 @@
+@@ -130,13 +136,17 @@
          nested.total = n + 1_000_000;
          return nested;
      }
@@ -114,7 +113,7 @@
          export var p2 = 222;
      }
      namespace ExpandoMerge {
-@@ -146,8 +143,10 @@
+@@ -146,8 +156,10 @@
      
      namespace Ns {
          function ExpandoNamespace(): void {}
@@ -125,7 +124,7 @@
              return ExpandoNamespace;
          }
      }
-@@ -189,8 +188,10 @@
+@@ -189,8 +201,10 @@
  !!! error TS2339: Property 'm' does not exist on type 'typeof ExpandoClass'.
      
      // Class expressions shouldn't work in typescript either

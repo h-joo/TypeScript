@@ -1,6 +1,5 @@
 // @declaration: true
 // @lib: es2020
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 // This function's type is changed on declaration
 export const fun = (
     subFun: <Collection, Field extends keyof Collection>()

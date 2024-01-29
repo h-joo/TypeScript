@@ -59,6 +59,31 @@ for(let f in (Foo.forIn = []) ){
 
 //// [expandoFunctionNestedAssigments.d.ts]
 declare function Foo(): void;
+declare namespace Foo {
+    var inVariableInit: invalid;
+    var bla: invalid;
+    var baz: invalid;
+    var bar: invalid;
+    var fromIf: invalid;
+    var inIf: invalid;
+    var fromWhileCondition: invalid;
+    var fromWhileBody: invalid;
+    var fromWhileBodyNested: invalid;
+    var fromDoBody: invalid;
+    var fromDoBodyNested: invalid;
+    var fromDoCondition: invalid;
+    var forInit: invalid;
+    var forCond: invalid;
+    var fromForBody: invalid;
+    var fromForBodyNested: invalid;
+    var forIncr: invalid;
+    var forOf: invalid;
+    var fromForOfBody: invalid;
+    var fromForOfBodyNested: invalid;
+    var forIn: invalid;
+    var fromForInBody: invalid;
+    var fromForInBodyNested: invalid;
+}
 declare let d: number;
 declare function bar(p?: number): void;
 //# sourceMappingURL=expandoFunctionNestedAssigments.d.ts.map

@@ -496,6 +496,7 @@ class IsolatedDeclarationTest extends CompilerTestBase {
         if (clonedOptions.isolatedDeclarations === undefined) {
             clonedOptions.isolatedDeclarations = true;
         }
+        clonedOptions.isolatedDeclarationsNoFallback = true;
         clonedOptions.allowJs = false;
         clonedOptions.checkJs = false;
         clonedOptions.skipLibCheck = true;
@@ -723,6 +724,7 @@ export class FixedIsolatedDeclarationTest extends IsolatedDeclarationTest {
         }
 
         env.compilerOptions.isolatedDeclarations = false;
+        env.compilerOptions.isolatedDeclarationsNoFallback = false;
         if (env.compilerOptions.declarationMap === undefined) {
             env.compilerOptions.declarationMap = true;
         }

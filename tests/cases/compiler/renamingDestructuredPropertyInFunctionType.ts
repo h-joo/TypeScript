@@ -1,7 +1,5 @@
 // @target: es2015
 // @declaration: true
-// @isolatedDeclarationDiffReason: TS normalizes types
-// @isolatedDeclarationFixedDiffReason: TS normalizes types
 // GH#37454, GH#41044
 
 type O = { a?: string; b: number; c: number; };

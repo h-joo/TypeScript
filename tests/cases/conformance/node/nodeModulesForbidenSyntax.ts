@@ -1,7 +1,6 @@
 // @module: node16,nodenext
 // @declaration: true
 // @filename: subfolder/index.ts
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 // cjs format file
 const x = <T>() => <T><any>(void 0);
 export {x};

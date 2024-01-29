@@ -5,16 +5,16 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -1,8 +1,23 @@
- 
+@@ -2,7 +2,25 @@
  
  //// [index.d.ts]
  export declare function foo(): void;
--export declare namespace foo {
+ export declare namespace foo {
 -    var bar: number;
--}
--//# sourceMappingURL=index.d.ts.map
++    var bar: invalid;
+ }
 \ No newline at end of file
+-//# sourceMappingURL=index.d.ts.map
 +//# sourceMappingURL=index.d.ts.map
 +/// [Errors] ////
 +

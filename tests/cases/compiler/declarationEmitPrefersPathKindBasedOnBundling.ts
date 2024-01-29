@@ -3,7 +3,6 @@
 // @baseUrl: .
 // @outDir: ./dist
 // @rootDir: ./src
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
 // @filename: src/lib/operators/scalar.ts
 export interface Scalar {
 	(): string;
