@@ -23,13 +23,13 @@ declare class Src implements NS.Dep {
 
 /// [Errors] ////
 
-/src/index.ts(1,22): error TS9024: Declaration emit for this file requires adding a type reference directive which are not supported with --isolatedDeclarations
+/src/index.ts(1,22): error TS9024: Declaration emit for this expression requires adding a type reference directive to 'dep' with --isolatedDeclarations.
 
 
 ==== /src/index.ts (1 errors) ====
     class Src implements NS.Dep { }
                          ~~~~~~
-!!! error TS9024: Declaration emit for this file requires adding a type reference directive which are not supported with --isolatedDeclarations
+!!! error TS9024: Declaration emit for this expression requires adding a type reference directive to 'dep' with --isolatedDeclarations.
     
 ==== /deps/dep/dep.d.ts (0 errors) ====
     declare namespace NS {

@@ -10,4 +10,5 @@ var x = 0;
 
 
 //// [declarationEmitInvalidReference2.d.ts]
+/// <reference path="invalid.ts" />
 declare var x: number;

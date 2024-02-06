@@ -40,7 +40,6 @@ import {
     NodeFlags,
     noop,
     notImplemented,
-    NullTransformationContext,
     returnUndefined,
     ScriptTarget,
     setEmitFlags,
@@ -50,7 +49,6 @@ import {
     SyntaxKind,
     tracing,
     TransformationContext,
-    TransformationContextKind,
     TransformationResult,
     transformClassFields,
     transformDeclarations,
@@ -269,7 +267,6 @@ export function transformNodes<T extends Node>(resolver: EmitResolver | undefine
     // The transformation context is provided to each transformer as part of transformer
     // initialization.
     const context: TransformationContext = {
-        kind: TransformationContextKind.FullContext,
         factory,
         getCompilerOptions: () => options,
         getEmitResolver: () => resolver!, // TODO: GH#18217
@@ -667,8 +664,7 @@ export function transformNodes<T extends Node>(resolver: EmitResolver | undefine
 }
 
 /** @internal */
-export const nullTransformationContext: NullTransformationContext = {
-    kind: TransformationContextKind.NullContext,
+export const nullTransformationContext: TransformationContext = {
     factory: factory, // eslint-disable-line object-shorthand
     getCompilerOptions: () => ({}),
     getEmitResolver: notImplemented,

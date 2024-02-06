@@ -19,7 +19,7 @@ declare function foo(): Error2;
 
 /// [Errors] ////
 
-/app.ts(1,17): error TS9024: Declaration emit for this file requires adding a type reference directive which are not supported with --isolatedDeclarations
+/app.ts(1,17): error TS9024: Declaration emit for this expression requires adding a type reference directive to 'node' with --isolatedDeclarations.
 
 
 ==== /node_modules/@types/node/index.d.ts (0 errors) ====
@@ -30,6 +30,6 @@ declare function foo(): Error2;
 ==== /app.ts (1 errors) ====
     function foo(): Error2 {
                     ~~~~~~
-!!! error TS9024: Declaration emit for this file requires adding a type reference directive which are not supported with --isolatedDeclarations
+!!! error TS9024: Declaration emit for this expression requires adding a type reference directive to 'node' with --isolatedDeclarations.
         return undefined;
     }

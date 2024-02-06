@@ -1,23 +1,43 @@
 import {
+    __String,
+    changeAnyExtension,
     CompilerOptions,
     createEmitDeclarationResolver,
     createGetCanonicalFileName,
     createPrinter,
     createSourceMapGenerator,
+    createSymlinkCache,
     createTextWriter,
     Diagnostic,
+    EmitHost,
     ensureTrailingDirectorySeparator,
+    factory,
+    fileExtensionIs,
+    flatten,
+    forEach,
     getAreDeclarationMapsEnabled,
     getBaseFileName,
     getDeclarationEmitOutputFilePathWorker,
     getNewLineCharacter,
     getSourceMapDirectory,
     getSourceMappingURL,
-    IsolatedTransformationContext,
+    getSupportedExtensions,
+    getSupportedExtensionsWithJsonIfResolveJsonModule,
+    hasExtension,
+    libMap as tsLibMap,
+    NodeFlags,
     normalizeSlashes,
+    notImplemented,
     nullTransformationContext,
+    objectAllocator,
+    removeFileExtension,
+    resolveTripleslashReference,
+    returnFalse,
+    returnUndefined,
     SourceFile,
-    TransformationContextKind,
+    SymbolFlags,
+    SyntaxKind,
+    TransformationContext,
     transformDeclarations,
     TranspileDeclarationsOptions,
     TranspileDeclarationsOutput,
@@ -28,24 +48,27 @@ export function transpileDeclaration(sourceFile: SourceFile, transpileOptions: T
         ...transpileOptions.compilerOptions,
         isolatedDeclarations: true,
     };
+    const supportedExtensions = getSupportedExtensions(compilerOptions);
+    const supportedExtensionsWithJsonIfResolveJsonModule = flatten(getSupportedExtensionsWithJsonIfResolveJsonModule(compilerOptions, supportedExtensions));
+
+    // eslint-disable-next-line no-var
+    var Symbol = objectAllocator.getSymbolConstructor();
+    const files = new Map<string, SourceFile>([[sourceFile.fileName, sourceFile]]);
     const getCanonicalFileName = createGetCanonicalFileName(!!compilerOptions.useCaseSensitiveFileNames);
     const currentDirectory = normalizeSlashes(transpileOptions.currentDirectory ?? ".");
     const commonSourceDirectory = normalizeSlashes(ensureTrailingDirectorySeparator(transpileOptions.commonSourceDirectory ?? "."));
-    const emitHost = {
-        getCurrentDirectory: () => currentDirectory,
-        getCanonicalFileName,
-        useCaseSensitiveFileNames: () => !!compilerOptions.useCaseSensitiveFileNames,
-        getCompilerOptions: () => compilerOptions.compilerOptions,
-        getCommonSourceDirectory: () => commonSourceDirectory,
-    };
-    const emitResolver = createEmitDeclarationResolver(sourceFile, compilerOptions);
+    const emitHost = createEmitHost();
+
+    const emitResolver = createEmitDeclarationResolver(sourceFile, compilerOptions, emitHost);
     const diagnostics: Diagnostic[] = [];
-    const transformationContext: IsolatedTransformationContext = {
+    const transformationContext: TransformationContext = {
         ...nullTransformationContext,
-        kind: TransformationContextKind.IsolatedContext,
         getCompilerOptions: () => compilerOptions,
         addDiagnostic: diag => diagnostics.push(diag),
         getEmitResolver: () => emitResolver,
+        getEmitHost() {
+            return emitHost;
+        },
     };
     const transformer = transformDeclarations(transformationContext);
     const result = transformer(sourceFile);
@@ -87,6 +110,23 @@ export function transpileDeclaration(sourceFile: SourceFile, transpileOptions: T
         diagnostics,
     };
 
+    function createSourceFile(fileName: string) {
+        const newSourceFile = factory.createSourceFile([], factory.createToken(SyntaxKind.EndOfFileToken), NodeFlags.None);
+        newSourceFile.fileName = fileName;
+        newSourceFile.symbol = new Symbol(SymbolFlags.ValueModule, `"${removeFileExtension(fileName)}"` as __String);
+        return newSourceFile;
+    }
+
+    function getSourceFile(fileName: string) {
+        const fileNameKey = changeAnyExtension(fileName, ".ts");
+        let sourceFile = files.get(fileNameKey);
+        if (!sourceFile) {
+            sourceFile = createSourceFile(fileName);
+            files.set(fileNameKey, sourceFile);
+        }
+        return sourceFile;
+    }
+
     function getSourceMapGenerator(declarationFilePath: string, declarationMapPath: string) {
         if (!getAreDeclarationMapsEnabled(compilerOptions)) return;
 
@@ -115,5 +155,51 @@ export function transpileDeclaration(sourceFile: SourceFile, transpileOptions: T
             sourceFile,
         );
         return { sourceMapGenerator, sourceMappingURL: `//# ${"sourceMappingURL"}=${sourceMappingURL}` };
+    }
+    function createEmitHost(): EmitHost {
+        const symlinkCache = createSymlinkCache(currentDirectory, getCanonicalFileName);
+        return {
+            getPrependNodes: notImplemented,
+            getCurrentDirectory: () => currentDirectory,
+            getCanonicalFileName,
+            useCaseSensitiveFileNames: () => !!compilerOptions.useCaseSensitiveFileNames,
+            getCompilerOptions: () => compilerOptions,
+            getCommonSourceDirectory: () => commonSourceDirectory,
+            getSourceFile,
+            getSourceFileByPath: notImplemented,
+            getSourceFiles: notImplemented,
+            isSourceFileFromExternalLibrary: notImplemented,
+            getResolvedProjectReferenceToRedirect: notImplemented,
+            getProjectReferenceRedirect: notImplemented,
+            isSourceOfProjectReferenceRedirect: returnFalse,
+            getSymlinkCache: () => symlinkCache,
+            writeFile: notImplemented,
+            isEmitBlocked: notImplemented,
+            readFile: returnUndefined,
+            fileExists: returnFalse,
+            getBuildInfo: notImplemented,
+            getLibFileFromReference(ref) {
+                if (compilerOptions.noLib) {
+                    return undefined;
+                }
+                if (!tsLibMap.has(ref.fileName)) {
+                    return;
+                }
+                return getSourceFile(ref.fileName);
+            },
+            getSourceFileFromReference(file, ref) {
+                const referencedFile = resolveTripleslashReference(ref.fileName, file.fileName);
+                if (hasExtension(referencedFile)) {
+                    const canonicalFileName = getCanonicalFileName(referencedFile);
+                    if (!compilerOptions.allowNonTsExtensions && !forEach(flatten(supportedExtensionsWithJsonIfResolveJsonModule), extension => fileExtensionIs(canonicalFileName, extension))) {
+                        return undefined;
+                    }
+                }
+                return getSourceFile(referencedFile);
+            },
+            redirectTargetsMap: new Map(),
+            getFileIncludeReasons: notImplemented,
+            createHash: notImplemented,
+        };
     }
 }

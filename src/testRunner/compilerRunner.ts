@@ -598,7 +598,7 @@ class IsolatedDeclarationTest extends CompilerTestBase {
         ts.Diagnostics.Computed_properties_must_be_number_or_string_literals_variables_or_dotted_expressions_with_isolatedDeclarations,
         ts.Diagnostics.Enum_member_initializers_must_be_computable_without_references_to_external_symbols_with_isolatedDeclarations,
         ts.Diagnostics.Extends_clause_can_t_contain_an_expression_with_isolatedDeclarations,
-        ts.Diagnostics.Declaration_emit_for_this_file_requires_adding_a_type_reference_directive_which_are_not_supported_with_isolatedDeclarations,
+        ts.Diagnostics.Declaration_emit_for_this_expression_requires_adding_a_type_reference_directive_to_0_with_isolatedDeclarations,
         ts.Diagnostics.Assigning_properties_to_functions_without_declaring_them_is_not_supported_with_isolatedDeclarations_Add_an_explicit_declaration_for_the_properties_assigned_to_this_function,
         ts.Diagnostics.Objects_that_contain_shorthand_properties_can_t_be_inferred_with_isolatedDeclarations,
         ts.Diagnostics.Objects_that_contain_spread_assignments_can_t_be_inferred_with_isolatedDeclarations,
@@ -748,7 +748,7 @@ export class FixedIsolatedDeclarationTest extends IsolatedDeclarationTest {
         return env;
     }
     private static referenceDirectiveErrors = new Set([
-        ts.Diagnostics.Declaration_emit_for_this_file_requires_adding_a_type_reference_directive_which_are_not_supported_with_isolatedDeclarations.code,
+        ts.Diagnostics.Declaration_emit_for_this_expression_requires_adding_a_type_reference_directive_to_0_with_isolatedDeclarations.code,
         ts.Diagnostics.Reference_directives_are_not_supported_with_isolatedDeclarations.code,
     ]);
     constructor(compilerEnvironment: CompilerTestEnvironment) {

@@ -23,7 +23,7 @@ export declare const bar: invalid;
 
 /// [Errors] ////
 
-/mod1.ts(1,24): error TS9024: Declaration emit for this file requires adding a type reference directive which are not supported with --isolatedDeclarations
+/mod1.ts(1,24): error TS9024: Declaration emit for this expression requires adding a type reference directive to 'lib' with --isolatedDeclarations.
 /mod2.ts(2,20): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 
 
@@ -40,5 +40,5 @@ export declare const bar: invalid;
 ==== /mod1.ts (1 errors) ====
     export function foo(): Lib { return {x: 1} }
                            ~~~
-!!! error TS9024: Declaration emit for this file requires adding a type reference directive which are not supported with --isolatedDeclarations
+!!! error TS9024: Declaration emit for this expression requires adding a type reference directive to 'lib' with --isolatedDeclarations.
     

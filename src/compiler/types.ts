@@ -5680,29 +5680,8 @@ export enum TypeReferenceSerializationKind {
 }
 
 /** @internal */
-export interface CoreEmitResolver {
+export interface EmitResolver {
     isLiteralComputedName(node: ComputedPropertyName): boolean;
-    isDeclarationVisible(node: Declaration | AnyImportSyntax): boolean;
-    isLateBound(node: Declaration): node is LateBoundDeclaration;
-    isImplementationOfOverload(node: SignatureDeclaration): boolean | undefined;
-    isExpandoFunction(node: VariableDeclaration | FunctionDeclaration): boolean;
-    createLiteralConstValue(node: VariableDeclaration | PropertyDeclaration | PropertySignature | ParameterDeclaration, tracker: SymbolTracker): Expression;
-    isEntityNameVisible(entityName: EntityNameOrEntityNameExpression, enclosingDeclaration: Node): SymbolVisibilityResult;
-    isOptionalParameter(node: ParameterDeclaration): boolean;
-    getTypeReferenceDirectivesForEntityName(name: EntityNameOrEntityNameExpression): [specifier: string, mode: ResolutionMode | undefined][] | undefined;
-    isLiteralConstDeclaration(node: VariableDeclaration | PropertyDeclaration | PropertySignature | ParameterDeclaration): boolean;
-    getSymbolOfExternalModuleSpecifier(node: StringLiteralLike): Symbol | undefined;
-    isImportRequiredByAugmentation(decl: ImportDeclaration): boolean;
-    getConstantValue(node: EnumMember | PropertyAccessExpression | ElementAccessExpression): string | number | undefined;
-    getAllAccessorDeclarations(declaration: AccessorDeclaration): AllAccessorDeclarations;
-    tryFindAmbientModule(moduleReferenceExpression: Expression): Symbol | undefined;
-    getPropertiesOfContainerFunction(node: FunctionDeclaration | VariableDeclaration): Symbol[];
-    createTypeOfDeclaration(declaration: AccessorDeclaration | VariableLikeDeclaration | PropertyAccessExpression | ElementAccessExpression | BinaryExpression, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker, addUndefined?: boolean): TypeNode | undefined;
-    createReturnTypeOfSignatureDeclaration(signatureDeclaration: SignatureDeclaration, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker): TypeNode | undefined;
-    createTypeOfExpression(expr: Expression, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker): TypeNode | undefined;
-}
-/** @internal */
-export interface EmitResolver extends CoreEmitResolver {
     hasGlobalName(name: string): boolean;
     getReferencedExportContainer(node: Identifier, prefixLocals?: boolean): SourceFile | ModuleDeclaration | EnumDeclaration | undefined;
     getReferencedImportDeclaration(node: Identifier): Declaration | undefined;
@@ -5712,23 +5691,40 @@ export interface EmitResolver extends CoreEmitResolver {
     isReferencedAliasDeclaration(node: Node, checkChildren?: boolean): boolean;
     isTopLevelValueImportEqualsWithEntityName(node: ImportEqualsDeclaration): boolean;
     getNodeCheckFlags(node: Node): NodeCheckFlags;
+    isDeclarationVisible(node: Declaration | AnyImportSyntax): boolean;
+    isLateBound(node: Declaration): node is LateBoundDeclaration;
     collectLinkedAliases(node: Identifier, setVisibility?: boolean): Node[] | undefined;
+    isImplementationOfOverload(node: SignatureDeclaration): boolean | undefined;
     isRequiredInitializedParameter(node: ParameterDeclaration): boolean;
-    isOptionalUninitializedParameterProperty(node: ParameterDeclaration): boolean;    
+    isOptionalUninitializedParameterProperty(node: ParameterDeclaration): boolean;
+    isExpandoFunction(node: VariableDeclaration | FunctionDeclaration): boolean;
+    getPropertiesOfContainerFunction(node: Declaration): Symbol[];
+    createTypeOfDeclaration(declaration: AccessorDeclaration | VariableLikeDeclaration | PropertyAccessExpression | ElementAccessExpression | BinaryExpression, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker, addUndefined?: boolean): TypeNode | undefined;
+    createReturnTypeOfSignatureDeclaration(signatureDeclaration: SignatureDeclaration, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker): TypeNode | undefined;
+    createTypeOfExpression(expr: Expression, enclosingDeclaration: Node, flags: NodeBuilderFlags, tracker: SymbolTracker): TypeNode | undefined;
+    createLiteralConstValue(node: VariableDeclaration | PropertyDeclaration | PropertySignature | ParameterDeclaration, tracker: SymbolTracker): Expression;
     isSymbolAccessible(symbol: Symbol, enclosingDeclaration: Node | undefined, meaning: SymbolFlags | undefined, shouldComputeAliasToMarkVisible: boolean): SymbolAccessibilityResult;
+    isEntityNameVisible(entityName: EntityNameOrEntityNameExpression, enclosingDeclaration: Node): SymbolVisibilityResult;
     // Returns the constant value this property access resolves to, or 'undefined' for a non-constant
+    getConstantValue(node: EnumMember | PropertyAccessExpression | ElementAccessExpression): string | number | undefined;
     getReferencedValueDeclaration(reference: Identifier): Declaration | undefined;
     getReferencedValueDeclarations(reference: Identifier): Declaration[] | undefined;
     getTypeReferenceSerializationKind(typeName: EntityName, location?: Node): TypeReferenceSerializationKind;
+    isOptionalParameter(node: ParameterDeclaration): boolean;
     moduleExportsSomeValue(moduleReferenceExpression: Expression): boolean;
     isArgumentsLocalBinding(node: Identifier): boolean;
     getExternalModuleFileFromDeclaration(declaration: ImportEqualsDeclaration | ImportDeclaration | ExportDeclaration | ModuleDeclaration | ImportTypeNode | ImportCall): SourceFile | undefined;
+    getTypeReferenceDirectivesForEntityName(name: EntityNameOrEntityNameExpression): [specifier: string, mode: ResolutionMode][] | undefined;
     getTypeReferenceDirectivesForSymbol(symbol: Symbol, meaning?: SymbolFlags): [specifier: string, mode: ResolutionMode][] | undefined;
+    isLiteralConstDeclaration(node: VariableDeclaration | PropertyDeclaration | PropertySignature | ParameterDeclaration): boolean;
     getJsxFactoryEntity(location?: Node): EntityName | undefined;
     getJsxFragmentFactoryEntity(location?: Node): EntityName | undefined;
+    getAllAccessorDeclarations(declaration: AccessorDeclaration): AllAccessorDeclarations;
+    getSymbolOfExternalModuleSpecifier(node: StringLiteralLike): Symbol | undefined;
     isBindingCapturedByNode(node: Node, decl: VariableDeclaration | BindingElement): boolean;
     getDeclarationStatementsForSourceFile(node: SourceFile, flags: NodeBuilderFlags, tracker: SymbolTracker, bundled?: boolean): Statement[] | undefined;
     isImportRequiredByAugmentation(decl: ImportDeclaration): boolean;
+    tryFindAmbientModule(moduleReferenceExpression: Expression): Symbol | undefined;
 }
 
 // dprint-ignore
@@ -8199,19 +8195,17 @@ export interface SourceFileMayBeEmittedHost {
     getCanonicalFileName: GetCanonicalFileName;
     useCaseSensitiveFileNames(): boolean;
 }
-/** @internal */
-export interface CoreEmitHost {
-    getCurrentDirectory(): string;
-    getCommonSourceDirectory(): string;
-    getCanonicalFileName(fileName: string): string;
-}
 
 /** @internal */
-export interface EmitHost extends ScriptReferenceHost, ModuleSpecifierResolutionHost, SourceFileMayBeEmittedHost, CoreEmitHost {
+export interface EmitHost extends ScriptReferenceHost, ModuleSpecifierResolutionHost, SourceFileMayBeEmittedHost {
     getSourceFiles(): readonly SourceFile[];
     useCaseSensitiveFileNames(): boolean;
+    getCurrentDirectory(): string;
 
     getLibFileFromReference(ref: FileReference): SourceFile | undefined;
+
+    getCommonSourceDirectory(): string;
+    getCanonicalFileName(fileName: string): string;
 
     isEmitBlocked(emitFileName: string): boolean;
 
@@ -9171,15 +9165,7 @@ export const enum LexicalEnvironmentFlags {
     VariablesHoistedInParameters = 1 << 1, // a temp variable was hoisted while visiting a parameter list
 }
 
-/** @internal */
-export const enum TransformationContextKind {
-    FullContext = 0,
-    IsolatedContext = 1,
-    NullContext = 2,
-}
-
 export interface CoreTransformationContext {
-    /** @internal */ kind: TransformationContextKind;
     readonly factory: NodeFactory;
 
     /** Gets the compiler options supplied to the transformer. */
@@ -9221,7 +9207,6 @@ export interface CoreTransformationContext {
 }
 
 export interface TransformationContext extends CoreTransformationContext {
-    /** @internal */ kind: TransformationContextKind.FullContext;
     /** @internal */ getEmitResolver(): EmitResolver;
     /** @internal */ getEmitHost(): EmitHost;
     /** @internal */ getEmitHelperFactory(): EmitHelperFactory;
@@ -9269,25 +9254,6 @@ export interface TransformationContext extends CoreTransformationContext {
     onEmitNode: (hint: EmitHint, node: Node, emitCallback: (hint: EmitHint, node: Node) => void) => void;
 
     /** @internal */ addDiagnostic(diag: DiagnosticWithLocation): void;
-}
-
-/** @internal */
-export interface IsolatedTransformationContext extends CoreTransformationContext {
-    kind: TransformationContextKind.IsolatedContext;
-    getEmitResolver(): CoreEmitResolver;
-    getCompilerOptions(): CompilerOptions;
-    factory: NodeFactory;
-    addDiagnostic(diag: Diagnostic): void;
-}
-/** @internal */
-export interface NullTransformationContext extends Omit<TransformationContext, "kind"> {
-    kind: TransformationContextKind.NullContext;
-    getEmitResolver(): never;
-    getEmitHost(): never;
-    getEmitHelperFactory(): never;
-    readEmitHelpers(): never;
-    isSubstitutionEnabled(): never;
-    isEmitNotificationEnabled(): never;
 }
 
 export interface TransformationResult<T extends Node> {

@@ -1,6 +1,7 @@
 // @module: amd
 // @declaration: true
 // @out: f.js
+// @isolatedDeclarationDiffReason: TSC adds type reference directives.
 
 // @filename: a.ts
 export class A {}

@@ -31,6 +31,7 @@ define("file1", ["require", "exports"], function (require, exports) {
 
 
 //// [bundle.d.ts]
+/// <reference lib="dom" />
 interface Object {
 }
 interface Array<T> {

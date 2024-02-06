@@ -57,7 +57,6 @@ import {
     ConstructSignatureDeclaration,
     contains,
     ContinueStatement,
-    CoreEmitHost,
     createBinaryExpressionTrampoline,
     createDiagnosticCollection,
     createGetCanonicalFileName,
@@ -740,7 +739,7 @@ export function getOutputFileNames(commandLine: ParsedCommandLine, inputFileName
 }
 
 /** @internal */
-export function getSourceMapDirectory(host: CoreEmitHost, mapOptions: SourceMapOptions, filePath: string, sourceFile: SourceFile | undefined) {
+export function getSourceMapDirectory(host: EmitHost, mapOptions: SourceMapOptions, filePath: string, sourceFile: SourceFile | undefined) {
     if (mapOptions.sourceRoot) return host.getCommonSourceDirectory();
     if (mapOptions.mapRoot) {
         let sourceMapDir = normalizeSlashes(mapOptions.mapRoot);
@@ -759,7 +758,7 @@ export function getSourceMapDirectory(host: CoreEmitHost, mapOptions: SourceMapO
 }
 
 /** @internal */
-export function getSourceMappingURL(host: CoreEmitHost, mapOptions: SourceMapOptions, sourceMapGenerator: SourceMapGenerator, filePath: string, sourceMapFilePath: string | undefined, sourceFile: SourceFile | undefined) {
+export function getSourceMappingURL(host: EmitHost, mapOptions: SourceMapOptions, sourceMapGenerator: SourceMapGenerator, filePath: string, sourceMapFilePath: string | undefined, sourceFile: SourceFile | undefined) {
     if (mapOptions.inlineSourceMap) {
         // Encode the sourceMap into the sourceMap url
         const sourceMapText = sourceMapGenerator.toString();

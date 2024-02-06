@@ -18,26 +18,7 @@ declare let $: { x: number }
 
 
 //// [/app.d.ts]
+/// <reference types="lib" />
 export interface A {
     x: typeof $;
 }
-
-/// [Errors] ////
-
-/app.ts(1,23): error TS9025: Reference directives are not supported with --isolatedDeclarations.
-
-
-==== /app.ts (1 errors) ====
-    /// <reference types="lib"/>
-                          ~~~
-!!! error TS9025: Reference directives are not supported with --isolatedDeclarations.
-    import {$} from "./ref";
-    export interface A {
-        x: typeof $;
-    }
-==== /ref.d.ts (0 errors) ====
-    export interface $ { x }
-    
-==== /types/lib/index.d.ts (0 errors) ====
-    declare let $: { x: number }
-    

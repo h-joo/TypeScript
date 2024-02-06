@@ -81,7 +81,6 @@ import {
     ContainerFlags,
     contains,
     containsPath,
-    CoreEmitHost,
     createGetCanonicalFileName,
     createMultiMap,
     createScanner,
@@ -6434,7 +6433,7 @@ export function sourceFileMayBeEmitted(sourceFile: SourceFile, host: SourceFileM
 }
 
 /** @internal */
-export function getSourceFilePathInNewDir(fileName: string, host: CoreEmitHost, newDirPath: string): string {
+export function getSourceFilePathInNewDir(fileName: string, host: EmitHost, newDirPath: string): string {
     return getSourceFilePathInNewDirWorker(fileName, newDirPath, host.getCurrentDirectory(), host.getCommonSourceDirectory(), f => host.getCanonicalFileName(f));
 }
 

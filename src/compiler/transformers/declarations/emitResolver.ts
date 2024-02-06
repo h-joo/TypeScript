@@ -4,7 +4,6 @@ import {
     bindSourceFile,
     CompilerOptions,
     ComputedPropertyName,
-    CoreEmitResolver,
     createEntityVisibilityChecker,
     createEvaluator,
     createNameResolver,
@@ -14,6 +13,8 @@ import {
     DeclarationName,
     determineIfDeclarationIsVisible,
     ElementAccessExpression,
+    EmitHost,
+    EmitResolver,
     emptyArray,
     entityNameToString,
     EnumDeclaration,
@@ -30,7 +31,9 @@ import {
     getNodeId,
     getParseTreeNode,
     getPropertyNameForPropertyNameNode,
+    getSourceFileOfNode,
     hasDynamicName,
+    hasExtension,
     hasProperty,
     hasStaticModifier,
     hasSyntacticModifier,
@@ -69,15 +72,19 @@ import {
     NodeFlags,
     nodeIsPresent,
     NoSubstitutionTemplateLiteral,
+    notImplementedResolver,
     NumericLiteral,
     objectAllocator,
     ParameterDeclaration,
     parsePseudoBigInt,
+    pathIsRelative,
     PrefixUnaryExpression,
     PropertyAccessExpression,
     PropertyDeclaration,
     PropertyName,
     PropertySignature,
+    resolveTripleslashReference,
+    setNodeFlags,
     skipParentheses,
     some,
     SourceFile,
@@ -107,7 +114,7 @@ interface EmitDeclarationNodeLinks {
 }
 
 /** @internal */
-export function createEmitDeclarationResolver(file: SourceFile, options: CompilerOptions): CoreEmitResolver {
+export function createEmitDeclarationResolver(file: SourceFile, options: CompilerOptions, host: EmitHost): EmitResolver {
     const nodeLinks: EmitDeclarationNodeLinks[] = [];
 
     const { isEntityNameVisible, collectLinkedAliases } = createEntityVisibilityChecker({
@@ -457,16 +464,21 @@ export function createEmitDeclarationResolver(file: SourceFile, options: Compile
         const lateBoundSymbols = resolveAllLateBoundSymbols(symbol, /*isStatic*/ true);
         return !!forEachEntry(lateBoundSymbols, p => p.flags & SymbolFlags.Value && isExpandoPropertyDeclaration(p.valueDeclaration));
     }
-
+    function makeInvalidType() {
+        const node = factory.createTypeReferenceNode("invalid");
+        setNodeFlags(node, node.flags | NodeFlags.ThisNodeHasError);
+        return node;
+    }
     return {
+        ...notImplementedResolver,
         createTypeOfDeclaration() {
-            return factory.createTypeReferenceNode("invalid");
+            return makeInvalidType();
         },
         createReturnTypeOfSignatureDeclaration() {
-            return factory.createTypeReferenceNode("invalid");
+            return makeInvalidType();
         },
         createTypeOfExpression() {
-            return factory.createTypeReferenceNode("invalid");
+            return makeInvalidType();
         },
         isDeclarationVisible,
         isLiteralConstDeclaration,
@@ -602,8 +614,14 @@ export function createEmitDeclarationResolver(file: SourceFile, options: Compile
             return undefined;
         },
         isExpandoFunction,
-        getSymbolOfExternalModuleSpecifier() {
-            return undefined;
+        getSymbolOfExternalModuleSpecifier(contextSpecifier) {
+            const currentSourceFile = getSourceFileOfNode(contextSpecifier);
+            const moduleSpecifier = contextSpecifier.text;
+            const resolvedFileName = resolveTripleslashReference(
+                pathIsRelative(moduleSpecifier) && !hasExtension(moduleSpecifier) ? moduleSpecifier + ".ts" : moduleSpecifier,
+                currentSourceFile.fileName
+            );
+            return host.getSourceFile(resolvedFileName)?.symbol;
         },
         isImportRequiredByAugmentation() {
             return false;

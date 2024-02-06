@@ -1,0 +1,17 @@
+// [[Reason: TSC adds import for augmentation, DTE can't know about the augmentation.]] ////
+
+//// [tests/cases/compiler/declarationEmitForModuleImportingModuleAugmentationRetainsImport.ts] ////
+
+===================================================================
+--- TSC	declarations
++++ DTE	declarations
+@@ -9,9 +9,8 @@
+ }
+ export declare function child1(prototype: ParentThing): invalid;
+ 
+ //// [/.src/parent.d.ts]
+-import './child1';
+ export declare class ParentThing implements ParentThing {
+ }
+ 
+ /// [Errors] ////
