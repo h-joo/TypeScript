@@ -1,4 +1,5 @@
 import {
+    ArrowFunction,
     BinaryExpression,
     BindingElement,
     CallSignatureDeclaration,
@@ -12,6 +13,7 @@ import {
     ElementAccessExpression,
     ExpressionWithTypeArguments,
     FunctionDeclaration,
+    FunctionExpression,
     GetAccessorDeclaration,
     getNameOfDeclaration,
     hasSyntacticModifier,
@@ -26,6 +28,7 @@ import {
     isElementAccessExpression,
     isExpressionWithTypeArguments,
     isFunctionDeclaration,
+    isFunctionExpressionOrArrowFunction,
     isGetAccessor,
     isHeritageClause,
     isImportEqualsDeclaration,
@@ -36,6 +39,7 @@ import {
     isParameter,
     isParameterPropertyDeclaration,
     isPropertyAccessExpression,
+    isPropertyAssignment,
     isPropertyDeclaration,
     isPropertySignature,
     isSetAccessor,
@@ -53,6 +57,7 @@ import {
     Node,
     ParameterDeclaration,
     PropertyAccessExpression,
+    PropertyAssignment,
     PropertyDeclaration,
     PropertySignature,
     QualifiedName,
@@ -80,6 +85,7 @@ export type DeclarationDiagnosticProducing =
     | VariableDeclaration
     | PropertyDeclaration
     | PropertySignature
+    | PropertyAssignment
     | BindingElement
     | SetAccessorDeclaration
     | GetAccessorDeclaration
@@ -88,6 +94,8 @@ export type DeclarationDiagnosticProducing =
     | MethodDeclaration
     | MethodSignature
     | FunctionDeclaration
+    | ArrowFunction
+    | FunctionExpression
     | ParameterDeclaration
     | TypeParameterDeclaration
     | ExpressionWithTypeArguments
@@ -204,13 +212,13 @@ export function createGetSymbolAccessibilityDiagnosticForNodeName(node: Declarat
 
 /** @internal */
 export function createGetSymbolAccessibilityDiagnosticForNode(node: DeclarationDiagnosticProducing): GetSymbolAccessibilityDiagnostic {
-    if (isVariableDeclaration(node) || isPropertyDeclaration(node) || isPropertySignature(node) || isPropertyAccessExpression(node) || isElementAccessExpression(node) || isBinaryExpression(node) || isBindingElement(node) || isConstructorDeclaration(node)) {
+    if (isVariableDeclaration(node) || isPropertyDeclaration(node) || isPropertySignature(node) || isPropertyAssignment(node) || isPropertyAccessExpression(node) || isElementAccessExpression(node) || isBinaryExpression(node) || isBindingElement(node) || isConstructorDeclaration(node)) {
         return getVariableDeclarationTypeVisibilityError;
     }
     else if (isSetAccessor(node) || isGetAccessor(node)) {
         return getAccessorDeclarationTypeVisibilityError;
     }
-    else if (isConstructSignatureDeclaration(node) || isCallSignatureDeclaration(node) || isMethodDeclaration(node) || isMethodSignature(node) || isFunctionDeclaration(node) || isIndexSignatureDeclaration(node)) {
+    else if (isConstructSignatureDeclaration(node) || isCallSignatureDeclaration(node) || isMethodDeclaration(node) || isMethodSignature(node) || isFunctionDeclaration(node) || isFunctionExpressionOrArrowFunction(node) || isIndexSignatureDeclaration(node)) {
         return getReturnTypeVisibilityError;
     }
     else if (isParameter(node)) {

@@ -148,7 +148,6 @@ import {
     isMethodSignature,
     isModifier,
     isModuleDeclaration,
-    isNamedDeclaration,
     isOmittedExpression,
     isOptionalDeclaration,
     isParameter,
@@ -342,7 +341,7 @@ export function transformDeclarations(context: TransformationContext) {
     const resolver = context.getEmitResolver();
     const options = context.getCompilerOptions();
     const { noResolve, stripInternal, isolatedDeclarations, isolatedDeclarationsNoFallback } = options;
-    const transformInitializerToTypeNode = initializerToTypeTransformer()
+    const transformInitializerToTypeNode = initializerToTypeTransformer();
     return transformRoot;
 
     function recordTypeReferenceDirectivesIfNecessary(typeReferenceDirectives: readonly [specifier: string, mode: ResolutionMode][] | undefined, isPresentInSource: boolean, requestingNode = referenceRequestingNode): void {
@@ -352,10 +351,10 @@ export function transformDeclarations(context: TransformationContext) {
         necessaryTypeReferences ??= new Map();
         for (const [specifier, mode] of typeReferenceDirectives) {
             const referenceKey = specifier + mode;
-            if(!necessaryTypeReferences.has(referenceKey)) {
+            if (!necessaryTypeReferences.has(referenceKey)) {
                 Debug.assert(isPresentInSource || (requestingNode !== undefined), "If reference is added, we should know why it was added");
                 const existingReference = isPresentInSource ?
-                    { specifier, requestingNode: undefined, mode, isPresentInSource }: 
+                    { specifier, requestingNode: undefined, mode, isPresentInSource } :
                     { specifier, requestingNode: requestingNode!, mode, isPresentInSource };
                 necessaryTypeReferences.set(referenceKey, existingReference);
             }
@@ -365,8 +364,8 @@ export function transformDeclarations(context: TransformationContext) {
     function recordExportedModuleFromDeclarationEmit(symbol: Symbol, isPresentInSource: boolean, requestingNode = referenceRequestingNode) {
         Debug.assert(isPresentInSource || (requestingNode !== undefined), "If reference comes from source, the requesting node must be missing, otherwise it must exist");
         exportedModulesFromDeclarationEmit ??= new Map();
-        if(!exportedModulesFromDeclarationEmit.has(symbol)) {
-            exportedModulesFromDeclarationEmit.set(symbol, isPresentInSource? { isPresentInSource, symbol, requestingNode: undefined } : { isPresentInSource, symbol, requestingNode: requestingNode!});
+        if (!exportedModulesFromDeclarationEmit.has(symbol)) {
+            exportedModulesFromDeclarationEmit.set(symbol, isPresentInSource ? { isPresentInSource, symbol, requestingNode: undefined } : { isPresentInSource, symbol, requestingNode: requestingNode! });
         }
     }
     function trackReferencedAmbientModule(node: ModuleDeclaration, symbol: Symbol) {
@@ -379,7 +378,7 @@ export function transformDeclarations(context: TransformationContext) {
         const container = getSourceFileOfNode(node);
         Debug.assert(referenceRequestingNode, "We should kow the requesting node for a module reference");
         const containerId = getOriginalNodeId(container);
-        if(!refs.has(containerId)) {
+        if (!refs.has(containerId)) {
             refs.set(getOriginalNodeId(container), { sourceFile: container, requestingNode: referenceRequestingNode, isPresentInSource: false });
         }
     }
@@ -610,7 +609,7 @@ export function transformDeclarations(context: TransformationContext) {
         necessaryTypeReferences = undefined;
         recordTypeReferenceDirectivesIfNecessary(
             node.typeReferenceDirectives.map(f => [f.fileName, f.resolutionMode ?? currentSourceFile.impliedNodeFormat]),
-            /*isPresentInSource*/ true
+            /*isPresentInSource*/ true,
         );
         refs = collectReferences(currentSourceFile, new Map());
         libs = collectLibs(currentSourceFile, new Set());
@@ -644,7 +643,7 @@ export function transformDeclarations(context: TransformationContext) {
             return necessaryTypeReferences ? mapDefined(arrayFrom(necessaryTypeReferences.values()), getFileReferenceForSpecifierModeTuple) : [];
         }
 
-        function getFileReferenceForSpecifierModeTuple({specifier, mode, requestingNode, isPresentInSource }: TypeReferenceInformation): FileReference | undefined {
+        function getFileReferenceForSpecifierModeTuple({ specifier, mode, requestingNode, isPresentInSource }: TypeReferenceInformation): FileReference | undefined {
             // Elide type references for which we have imports
             if (emittedImports) {
                 for (const importStatement of emittedImports) {
@@ -671,11 +670,10 @@ export function transformDeclarations(context: TransformationContext) {
 
         function mapReferencesIntoArray(references: FileReference[], outputFilePath: string): (moduleReference: ModuleReferenceInformation) => void {
             return ({ sourceFile: file, isPresentInSource, requestingNode }) => {
-
                 if (exportedModulesFromDeclarationEmit) {
-                    const importReference = exportedModulesFromDeclarationEmit?.get(file.symbol)
+                    const importReference = exportedModulesFromDeclarationEmit?.get(file.symbol);
                     // Already have an import declaration resolving to this file
-                    if(importReference && importReference.isPresentInSource) {
+                    if (importReference && importReference.isPresentInSource) {
                         return;
                     }
                 }
@@ -808,7 +806,7 @@ export function transformDeclarations(context: TransformationContext) {
     }
 
     function shouldPrintWithInitializer(node: Node) {
-        return canHaveLiteralInitializer(node) && !node.type && resolver.isLiteralConstDeclaration(getParseTreeNode(node) as CanHaveLiteralInitializer); // TODO: Make safe
+        return canHaveLiteralInitializer(node) && resolver.isLiteralConstDeclaration(getParseTreeNode(node) as CanHaveLiteralInitializer); // TODO: Make safe
     }
 
     function ensureNoInitializer(node: CanHaveLiteralInitializer) {
@@ -828,10 +826,7 @@ export function transformDeclarations(context: TransformationContext) {
             return;
         }
         return transformInitializerToTypeNode(node, type);
-        
-        // if(!isFullContext) {
-        //     return 
-        // }
+
         // const shouldUseResolverType = node.kind === SyntaxKind.Parameter &&
         //     (resolver.isRequiredInitializedParameter(node) ||
         //         resolver.isOptionalUninitializedParameterProperty(node));
@@ -1636,7 +1631,7 @@ export function transformDeclarations(context: TransformationContext) {
                                 ));
                             }
                         });
-                        if(isolatedDeclarationsNoFallback) {
+                        if (isolatedDeclarationsNoFallback) {
                             return clean;
                         }
                     }
@@ -1657,7 +1652,7 @@ export function transformDeclarations(context: TransformationContext) {
                         getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNode(p.valueDeclaration);
                         const oldReferenceRequestingNode = referenceRequestingNode;
                         referenceRequestingNode = p.valueDeclaration;
-                        const type = isolatedDeclarationsNoFallback? makeInvalidType(): resolver.createTypeOfDeclaration(p.valueDeclaration, fakespace, declarationEmitNodeBuilderFlags, symbolTracker);
+                        const type = isolatedDeclarationsNoFallback ? makeInvalidType() : resolver.createTypeOfDeclaration(p.valueDeclaration, fakespace, declarationEmitNodeBuilderFlags, symbolTracker);
                         getSymbolAccessibilityDiagnostic = oldDiag;
                         referenceRequestingNode = oldReferenceRequestingNode;
                         const isNonContextualKeywordName = isStringANonContextualKeyword(nameStr);
@@ -2087,7 +2082,6 @@ export function transformDeclarations(context: TransformationContext) {
         ));
     }
 
-    
     function makeInvalidType() {
         return factory.createTypeReferenceNode("invalid");
     }
@@ -2105,14 +2099,13 @@ export function transformDeclarations(context: TransformationContext) {
                 context.addDiagnostic(message);
             }
         }
-    
-    
+
         function transformAccessorType(getAccessor?: GetAccessorDeclaration, setAccessor?: SetAccessorDeclaration) {
             let getAccessorType;
             if (getAccessor?.type) {
                 getAccessorType = getAccessor.type;
             }
-    
+
             let setAccessorType;
             if (setAccessor) {
                 const param = setAccessor.parameters.find(p => !isThisIdentifier(p.name));
@@ -2121,21 +2114,21 @@ export function transformDeclarations(context: TransformationContext) {
                     setAccessorType = parameterType;
                 }
             }
-    
+
             return { getAccessorType, setAccessorType };
         }
-    
+
         function findNearestDeclaration(node: Node) {
             const result = findAncestor(node, n => isExportAssignment(n) || (isStatement(n) ? "quit" : isVariableDeclaration(n) || isPropertyDeclaration(n) || isParameter(n)));
             return result as VariableDeclaration | PropertyDeclaration | ParameterDeclaration | ExportAssignment | undefined;
         }
-    
+
         function createAccessorTypeError(getAccessor: GetAccessorDeclaration | undefined, setAccessor: SetAccessorDeclaration | undefined) {
             const node = (getAccessor ?? setAccessor)!;
-    
+
             const targetNode = (isSetAccessor(node) ? node.parameters[0] : node) ?? node;
             const diag = createDiagnosticForNode(targetNode, errorByDeclarationKind[node.kind]);
-    
+
             if (setAccessor) {
                 addRelatedInfo(diag, createDiagnosticForNode(setAccessor, relatedSuggestionByDeclarationKind[setAccessor.kind]));
             }
@@ -2221,7 +2214,7 @@ export function transformDeclarations(context: TransformationContext) {
                     return typeInferenceFallback(node, createExpressionError(node));
                 case SyntaxKind.ArrowFunction:
                 case SyntaxKind.FunctionExpression:
-                    return transformFunctionExpressionOrArrowFunction(node as ArrowFunction | FunctionExpression)
+                    return transformFunctionExpressionOrArrowFunction(node as ArrowFunction | FunctionExpression);
                 case SyntaxKind.TypeAssertionExpression:
                 case SyntaxKind.AsExpression:
                     const asExpression = node as AsExpression | TypeAssertion;
@@ -2251,7 +2244,7 @@ export function transformDeclarations(context: TransformationContext) {
                                     }
                             }
                         }
-    
+
                         if (prefixOp.operator === SyntaxKind.PlusToken) {
                             return factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
                         }
@@ -2282,23 +2275,23 @@ export function transformDeclarations(context: TransformationContext) {
                 case SyntaxKind.ObjectLiteralExpression:
                     return transformObjectLiteralExpressionToType(node as ObjectLiteralExpression, inferenceFlags);
             }
-            
+
             return typeInferenceFallback(node, createExpressionError(node));
         }
         function typeInferenceFallback(node: Node, diagMessage?: DiagnosticWithLocation): TypeNode {
-            if(isolatedDeclarationsNoFallback) {
-                if(diagMessage) {
+            if (isolatedDeclarationsNoFallback) {
+                if (diagMessage) {
                     reportError(node, diagMessage);
                 }
                 return makeInvalidType();
             }
             const type = typeInferenceFallbackWorker(node);
-            if(isolatedDeclarations && diagMessage) {
+            if (isolatedDeclarations && diagMessage) {
                 reportError(node, diagMessage);
             }
             return type ?? makeInvalidType();
         }
-        function typeInferenceFallbackFromNamedDeclaration(node: NamedDeclaration) {
+        function typeInferenceFallbackFromDeclaration(node: HasInferredType) {
             const savedErrorNameNode = errorNameNode;
             const savedErrorFallbackNode = errorFallbackNode;
             const savedReferenceRequestingNode = referenceRequestingNode;
@@ -2306,38 +2299,86 @@ export function transformDeclarations(context: TransformationContext) {
             errorNameNode = node.name;
             errorFallbackNode = node;
             referenceRequestingNode = node;
-            if(isFunctionLike(node)) {
-                typeNode =  resolver.createReturnTypeOfSignatureDeclaration(node, node, declarationEmitNodeBuilderFlags, symbolTracker);
+            errorNameNode = node.name;
+            let oldDiag: typeof getSymbolAccessibilityDiagnostic | undefined;
+            if (!suppressNewDiagnosticContexts) {
+                oldDiag = getSymbolAccessibilityDiagnostic;
+                getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNode(node);
             }
-            else if(isPropertyAssignment(node) || isParameter(node) || isVariableDeclaration(node) || isBindingElement(node) || isPropertyDeclaration(node)) {
-                resolver.createTypeOfDeclaration(node.parent.parent as any, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker);
-                typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker);
+            switch (node.kind) {
+                case SyntaxKind.PropertyAssignment:
+                    typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags | NodeBuilderFlags.InObjectTypeLiteral, symbolTracker);
+                    break;
+                case SyntaxKind.Parameter:
+                case SyntaxKind.PropertySignature:
+                case SyntaxKind.PropertyDeclaration:
+                case SyntaxKind.BindingElement:
+                case SyntaxKind.VariableDeclaration:
+                    typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker);
+                    break;
+                case SyntaxKind.FunctionDeclaration:
+                case SyntaxKind.ConstructSignature:
+                case SyntaxKind.MethodSignature:
+                case SyntaxKind.MethodDeclaration:
+                case SyntaxKind.GetAccessor:
+                case SyntaxKind.SetAccessor:
+                case SyntaxKind.CallSignature:
+                case SyntaxKind.ArrowFunction:
+                case SyntaxKind.FunctionExpression:
+                    typeNode = resolver.createReturnTypeOfSignatureDeclaration(node, node, declarationEmitNodeBuilderFlags, symbolTracker);
+                    break;
+                default:
+                    Debug.assertNever(node);
+
             }
             errorNameNode = savedErrorNameNode;
             errorFallbackNode = savedErrorFallbackNode;
             referenceRequestingNode = savedReferenceRequestingNode;
+            if (oldDiag) {
+                getSymbolAccessibilityDiagnostic = oldDiag;
+            }
             return typeNode ?? makeInvalidType();
-         
+        }
+        function hasInferredType(node: Node): node is HasInferredType {
+            switch (node.kind) {
+                case SyntaxKind.FunctionDeclaration:
+                case SyntaxKind.MethodDeclaration:
+                case SyntaxKind.GetAccessor:
+                case SyntaxKind.SetAccessor:
+                case SyntaxKind.BindingElement:
+                case SyntaxKind.ConstructSignature:
+                case SyntaxKind.VariableDeclaration:
+                case SyntaxKind.MethodSignature:
+                case SyntaxKind.CallSignature:
+                case SyntaxKind.ArrowFunction:
+                case SyntaxKind.FunctionExpression:
+                case SyntaxKind.Parameter:
+                case SyntaxKind.PropertyDeclaration:
+                case SyntaxKind.PropertySignature:
+                case SyntaxKind.PropertyAssignment:
+                    return true;
+                default:
+                    return false;
+            }
         }
         function typeInferenceFallbackWorker(node: Node): TypeNode | undefined {
-            
-            if((isFunctionLike(node) || isDeclaration(node)) && !isClassExpression(node) ) {
-                return typeInferenceFallbackFromNamedDeclaration(node);
-            }
-               
-            const parent = findAncestor(node.parent, e => e.kind !== SyntaxKind.ParenthesizedExpression);
-            if (parent && isDeclaration(parent) && isNamedDeclaration(parent)) {
-                return typeInferenceFallbackFromNamedDeclaration(parent);
+            if (hasInferredType(node)) {
+                return typeInferenceFallbackFromDeclaration(node);
             }
 
-            if(isExpression(node)) {
+            const parent = findAncestor(node.parent, e => e.kind !== SyntaxKind.ParenthesizedExpression);
+            if (parent && hasInferredType(parent)) {
+                return typeInferenceFallbackFromDeclaration(parent);
+            }
+
+            if (isExpression(node)) {
                 return resolver.createTypeOfExpression(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker);
             }
         }
-        function transformFunctionExpressionOrArrowFunction(fnNode: FunctionExpression | ArrowFunction)  {
+        function transformFunctionExpressionOrArrowFunction(fnNode: FunctionExpression | ArrowFunction) {
             const oldEnclosingDeclaration = enclosingDeclaration;
             enclosingDeclaration = fnNode;
-            
+
             const returnType = !fnNode.type ? typeInferenceFallback(fnNode, createReturnTypeError(fnNode)) :
                 visitTypeAndClone(fnNode.type);
             const fnTypeNode = factory.createFunctionTypeNode(
@@ -2355,13 +2396,13 @@ export function transformDeclarations(context: TransformationContext) {
                     return false;
                 }
             }
-            return true
+            return true;
         }
         function transformArrayLiteralToType(arrayLiteral: ArrayLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
             if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConst)) {
                 return typeInferenceFallback(arrayLiteral, createArrayLiteralError(arrayLiteral));
             }
-            if(!canGetTypeFromArrayLiteral(arrayLiteral)) {
+            if (!canGetTypeFromArrayLiteral(arrayLiteral)) {
                 return typeInferenceFallback(arrayLiteral);
             }
             const elementTypesInfo: TypeNode[] = [];
@@ -2382,9 +2423,9 @@ export function transformDeclarations(context: TransformationContext) {
             return factory.createTypeOperatorNode(SyntaxKind.ReadonlyKeyword, tupleType);
         }
         function canGetTypeFromObjectLiteral(objectLiteral: ObjectLiteralExpression) {
-            let result = true
-            for(const prop of objectLiteral.properties) {
-                if(hasParseError(prop)) {
+            let result = true;
+            for (const prop of objectLiteral.properties) {
+                if (hasParseError(prop)) {
                     result = false;
                     break; // Bail if parse errors
                 }
@@ -2394,9 +2435,9 @@ export function transformDeclarations(context: TransformationContext) {
                 }
                 else if (isSpreadAssignment(prop)) {
                     reportError(prop, createObjectLiteralError(prop));
-                    result = false;                
+                    result = false;
                 }
-                else if(hasParseError(prop.name)) {
+                else if (hasParseError(prop.name)) {
                     result = false;
                     break; // Bail if parse errors
                 }
@@ -2404,7 +2445,7 @@ export function transformDeclarations(context: TransformationContext) {
                     // Not valid in object literals but the compiler will complain about this, we just ignore it here.
                     result = false;
                 }
-                else if(isComputedPropertyName(prop.name)) {
+                else if (isComputedPropertyName(prop.name)) {
                     const expression = prop.name.expression;
                     if (!isPrimitiveLiteralValue(expression, /*includeBigInt*/ false) && !isEntityNameExpression(expression)) {
                         reportError(prop, createObjectLiteralError(prop.name));
@@ -2415,11 +2456,10 @@ export function transformDeclarations(context: TransformationContext) {
             return result;
         }
         function transformObjectLiteralExpressionToType(objectLiteral: ObjectLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
-            if(!canGetTypeFromObjectLiteral(objectLiteral)) return typeInferenceFallback(objectLiteral);
+            if (!canGetTypeFromObjectLiteral(objectLiteral)) return typeInferenceFallback(objectLiteral);
 
             const properties: TypeElement[] = [];
             for (const prop of objectLiteral.properties) {
-                
                 Debug.assert(!isShorthandPropertyAssignment(prop) && !isSpreadAssignment(prop));
 
                 let name;
@@ -2436,14 +2476,16 @@ export function transformDeclarations(context: TransformationContext) {
                         if (!resolver.isLiteralComputedName(prop.name)) {
                             reportError(prop.name, createObjectLiteralError(prop.name));
                         }
-                        if(!isEntityNameAccessible) {
+                        if (!isEntityNameAccessible) {
                             computedNameExpressionType = typeInferenceFallback(prop.name.expression, createObjectLiteralError(prop.name));
-                            if(computedNameExpressionType) {
-                                if(isTypeQueryNode(computedNameExpressionType) && 
-                                    (isIdentifier(computedNameExpressionType.exprName) || isEntityNameExpression(computedNameExpressionType.exprName))) {
-                                    name = factory.createComputedPropertyName(computedNameExpressionType.exprName);    
+                            if (computedNameExpressionType) {
+                                if (
+                                    isTypeQueryNode(computedNameExpressionType) &&
+                                    (isIdentifier(computedNameExpressionType.exprName) || isEntityNameExpression(computedNameExpressionType.exprName))
+                                ) {
+                                    name = factory.createComputedPropertyName(computedNameExpressionType.exprName);
                                 }
-                                else if(isLiteralTypeNode(computedNameExpressionType)) {
+                                else if (isLiteralTypeNode(computedNameExpressionType)) {
                                     name = factory.createComputedPropertyName(computedNameExpressionType.literal);
                                 }
                             }
@@ -2452,7 +2494,7 @@ export function transformDeclarations(context: TransformationContext) {
                 }
 
                 name ??= deepClone(prop.name);
-    
+
                 let newProp;
                 if (isMethodDeclaration(prop)) {
                     newProp = transformMethodDeclarationToSignature(prop, name, inferenceFlags);
@@ -2472,7 +2514,7 @@ export function transformDeclarations(context: TransformationContext) {
                 else {
                     newProp = transformAccessor(prop);
                 }
-    
+
                 if (newProp) {
                     const commentRange = getCommentRange(prop);
                     setCommentRange(newProp, {
@@ -2482,10 +2524,10 @@ export function transformDeclarations(context: TransformationContext) {
                     properties.push(newProp);
                 }
             }
-    
+
             return factory.createTypeLiteralNode(properties);
         }
-    
+
         function transformMethodDeclarationToSignature(method: MethodDeclaration, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
             const oldEnclosingDeclaration = enclosingDeclaration;
             enclosingDeclaration = method;
@@ -2508,7 +2550,7 @@ export function transformDeclarations(context: TransformationContext) {
                     );
                 }
                 else {
-                    if(isIdentifier(name) && name.escapedText === "new") {
+                    if (isIdentifier(name) && name.escapedText === "new") {
                         name = factory.createStringLiteral("new");
                     }
                     return factory.createMethodSignature(
@@ -2525,14 +2567,14 @@ export function transformDeclarations(context: TransformationContext) {
                 enclosingDeclaration = oldEnclosingDeclaration;
             }
         }
-    
+
         function transformAccessor(accessor: GetAccessorDeclaration | SetAccessorDeclaration) {
             const { getAccessor, setAccessor, firstAccessor } = resolver.getAllAccessorDeclarations(accessor);
             const accessorType = transformAccessorType(getAccessor, setAccessor);
             // We have types for both accessors, we can't know if they are the same type so we keep both accessors
             if (accessorType.getAccessorType !== undefined && accessorType.setAccessorType !== undefined) {
                 const parameters = accessor.parameters.map(p => deepClone(ensureParameter(p)));
-    
+
                 if (isGetAccessor(accessor)) {
                     return factory.createGetAccessorDeclaration(
                         [],
@@ -2580,15 +2622,15 @@ export function transformDeclarations(context: TransformationContext) {
                 return typeof baseType === "number" ? factory.createKeywordTypeNode(baseType) : factory.createTypeReferenceNode(baseType);
             }
         }
-    
+
         function visitTypeAndClone(type: TypeNode) {
             const visitedType = visitNode(type, visitDeclarationSubtree, isTypeNode)!;
             return deepClone(visitedType);
         }
-    
+
         function deepClone<T extends Node>(node: T): T {
-            // Can we reuse all nodes? 
-            switch(node.kind) {
+            // Can we reuse all nodes?
+            switch (node.kind) {
                 case SyntaxKind.StringLiteral:
                     return node;
             }
@@ -2596,7 +2638,7 @@ export function transformDeclarations(context: TransformationContext) {
             // If node has children visitEachChild will already return a new node
             if (clonedNode !== node) {
                 return clonedNode;
-            }            
+            }
             return setTextRange(factory.cloneNode(node), node);
             function deepCloneNodes(
                 nodes: NodeArray<Node> | undefined,
@@ -2613,12 +2655,12 @@ export function transformDeclarations(context: TransformationContext) {
                 return visitNodes(nodes, visitor, test, start, count);
             }
         }
-    
+
         function addUndefinedInUnion(type: TypeNode) {
             if (isUnionTypeNode(type)) {
                 const hasUndefined = type.types.some(p => p.kind === SyntaxKind.UndefinedKeyword);
                 if (hasUndefined) return type;
-    
+
                 return factory.createUnionTypeNode([
                     ...type.types,
                     factory.createKeywordTypeNode(SyntaxKind.UndefinedKeyword),
@@ -2646,7 +2688,7 @@ export function transformDeclarations(context: TransformationContext) {
         function transformInitializerToTypeNodeWorker(node: HasInferredType | ExportAssignment, type: TypeNode | undefined): TypeNode {
             if (isParameter(node)) {
                 let localType: TypeNode;
-    
+
                 if (type) {
                     localType = visitNode(type, visitDeclarationSubtree, isTypeNode)!;
                 }
@@ -2658,7 +2700,7 @@ export function transformDeclarations(context: TransformationContext) {
                 else {
                     localType = typeInferenceFallback(node, createParameterError(node));
                 }
-    
+
                 if (strictNullChecks) {
                     const isOptional = resolver.isOptionalParameter(node);
                     /**
@@ -2697,14 +2739,14 @@ export function transformDeclarations(context: TransformationContext) {
                     }
                     else {
                         if (resolver.isExpandoFunction(node)) {
-                            if(isolatedDeclarations)  {
+                            if (isolatedDeclarations) {
                                 resolver.getPropertiesOfContainerFunction(node)
                                     .forEach(p => {
                                         if (isExpandoPropertyDeclaration(p.valueDeclaration)) {
                                             const errorTarget = isBinaryExpression(p.valueDeclaration) ?
                                                 p.valueDeclaration.left :
                                                 p.valueDeclaration;
-        
+
                                             reportError(
                                                 errorTarget,
                                                 createDiagnosticForNode(
@@ -2756,10 +2798,10 @@ export function transformDeclarations(context: TransformationContext) {
                     case SyntaxKind.MethodDeclaration:
                     case SyntaxKind.FunctionDeclaration:
                         return typeInferenceFallback(node, createReturnTypeError(node));
-    
+
                     case SyntaxKind.BindingElement:
                         const parentDeclaration = findNearestDeclaration(node);
-                        if (parentDeclaration && (isVariableDeclaration(parentDeclaration)  || isParameter(parentDeclaration))) {
+                        if (parentDeclaration && (isVariableDeclaration(parentDeclaration) || isParameter(parentDeclaration))) {
                             return typeInferenceFallback(node, createBindingElementError(node));
                         }
                         else {
@@ -2808,17 +2850,17 @@ function getTypeAnnotationFromAccessor(accessor: AccessorDeclaration): TypeNode 
     }
 }
 
-type ImportReferenceInformation = 
-    | { symbol: Symbol, requestingNode: undefined, isPresentInSource: true }
-    | { symbol: Symbol, requestingNode: Node, isPresentInSource: false };
+type ImportReferenceInformation =
+    | { symbol: Symbol; requestingNode: undefined; isPresentInSource: true; }
+    | { symbol: Symbol; requestingNode: Node; isPresentInSource: false; };
 
-type ModuleReferenceInformation = 
-    | { sourceFile: SourceFile, requestingNode: undefined, isPresentInSource: true }
-    | { sourceFile: SourceFile, requestingNode: Node, isPresentInSource: false };
+type ModuleReferenceInformation =
+    | { sourceFile: SourceFile; requestingNode: undefined; isPresentInSource: true; }
+    | { sourceFile: SourceFile; requestingNode: Node; isPresentInSource: false; };
 
-type TypeReferenceInformation = 
-    | { specifier: string; mode: ResolutionMode, requestingNode: undefined, isPresentInSource: true }
-    | { specifier: string; mode: ResolutionMode, requestingNode: Node, isPresentInSource: false };
+type TypeReferenceInformation =
+    | { specifier: string; mode: ResolutionMode; requestingNode: undefined; isPresentInSource: true; }
+    | { specifier: string; mode: ResolutionMode; requestingNode: Node; isPresentInSource: false; };
 
 type CanHaveLiteralInitializer = VariableDeclaration | PropertyDeclaration | PropertySignature | ParameterDeclaration;
 function canHaveLiteralInitializer(node: Node): node is CanHaveLiteralInitializer {
@@ -2908,7 +2950,6 @@ function isProcessedComponent(node: Node): node is ProcessedComponent {
     }
     return false;
 }
-
 
 const enum InitializeTransformNarrowBehavior {
     None = 0,
