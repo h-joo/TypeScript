@@ -3,7 +3,7 @@
 // @module: nodenext
 // @moduleResolution: nodenext
 // @target: esnext
-// @isolatedDeclarationFixedDiffReason: Sourcemap is more detailed
+// @isolatedDeclarationFixedDiffReason: checker.typeToTypeNode deliberately fails on types that originate from node_modules.
 
 // @filename: node_modules/@tanstack/vue-query/build/modern/useQuery-CPqkvEsh.d.ts
 type QueryKey = ReadonlyArray<unknown>;

@@ -1,5 +1,5 @@
 ﻿// @declaration: true
-// @isolatedDeclarationFixedDiffReason: Syntactically invalid.
+// @isolatedDeclarationFixedDiffReason: Semantically invalid. TSC does not emit .d.ts
 class C1 {
     constructor(public [x, y, z]: string[]) {
     }

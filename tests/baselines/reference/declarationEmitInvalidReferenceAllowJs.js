@@ -11,5 +11,4 @@ var x = 0;
 
 
 //// [declarationEmitInvalidReferenceAllowJs.d.ts]
-/// <reference path="invalid" />
 declare var x: number;
