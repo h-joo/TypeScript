@@ -808,7 +808,7 @@ export function transformDeclarations(context: TransformationContext) {
     }
 
     function shouldPrintWithInitializer(node: Node) {
-        return canHaveLiteralInitializer(node) && resolver.isLiteralConstDeclaration(getParseTreeNode(node) as CanHaveLiteralInitializer); // TODO: Make safe
+        return canHaveLiteralInitializer(node) && !node.type && resolver.isLiteralConstDeclaration(getParseTreeNode(node) as CanHaveLiteralInitializer); // TODO: Make safe
     }
 
     function ensureNoInitializer(node: CanHaveLiteralInitializer) {
@@ -2821,7 +2821,7 @@ type TypeReferenceInformation =
     | { specifier: string; mode: ResolutionMode, requestingNode: Node, isPresentInSource: false };
 
 type CanHaveLiteralInitializer = VariableDeclaration | PropertyDeclaration | PropertySignature | ParameterDeclaration;
-function canHaveLiteralInitializer(node: Node): boolean {
+function canHaveLiteralInitializer(node: Node): node is CanHaveLiteralInitializer {
     switch (node.kind) {
         case SyntaxKind.PropertyDeclaration:
         case SyntaxKind.PropertySignature:

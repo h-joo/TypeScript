@@ -5,10 +5,11 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -1,21 +1,4 @@
+@@ -1,22 +1,4 @@
  
  
  //// [/app.d.ts]
+-/// <reference types="node" />
  declare function foo(): Error2;
 -
 -/// [Errors] ////
