@@ -1390,6 +1390,8 @@ export type HasInferredType =
     | MethodDeclaration
     | GetAccessorDeclaration
     | SetAccessorDeclaration
+    | FunctionExpression
+    | ArrowFunction
     | BindingElement
     | ConstructSignatureDeclaration
     | VariableDeclaration
@@ -1397,7 +1399,8 @@ export type HasInferredType =
     | CallSignatureDeclaration
     | ParameterDeclaration
     | PropertyDeclaration
-    | PropertySignature;
+    | PropertySignature
+    | PropertyAssignment;
 /**
  * Declarations that can contain other declarations. Corresponds with `ContainerFlags.IsContainer` in binder.ts.
  *

@@ -170,7 +170,6 @@ import {
     isStringANonContextualKeyword,
     isStringLiteral,
     isStringLiteralLike,
-    isThisIdentifier,
     isTupleTypeNode,
     isTypeAliasDeclaration,
     isTypeAssertionExpression,
@@ -212,7 +211,6 @@ import {
     NodeId,
     normalizeSlashes,
     NoSubstitutionTemplateLiteral,
-    nullTransformationContext,
     NumericLiteral,
     ObjectLiteralExpression,
     OmittedExpression,
@@ -271,7 +269,6 @@ import {
     visitEachChild,
     visitNode,
     visitNodes,
-    Visitor,
     VisitResult,
 } from "../_namespaces/ts";
 import * as moduleSpecifiers from "../_namespaces/ts.moduleSpecifiers";
@@ -806,7 +803,7 @@ export function transformDeclarations(context: TransformationContext) {
     }
 
     function shouldPrintWithInitializer(node: Node) {
-        return canHaveLiteralInitializer(node) && resolver.isLiteralConstDeclaration(getParseTreeNode(node) as CanHaveLiteralInitializer); // TODO: Make safe
+        return canHaveLiteralInitializer(node) && !node.type && resolver.isLiteralConstDeclaration(getParseTreeNode(node) as CanHaveLiteralInitializer); // TODO: Make safe
     }
 
     function ensureNoInitializer(node: CanHaveLiteralInitializer) {
@@ -826,47 +823,6 @@ export function transformDeclarations(context: TransformationContext) {
             return;
         }
         return transformInitializerToTypeNode(node, type);
-
-        // const shouldUseResolverType = node.kind === SyntaxKind.Parameter &&
-        //     (resolver.isRequiredInitializedParameter(node) ||
-        //         resolver.isOptionalUninitializedParameterProperty(node));
-        // if (type && !shouldUseResolverType) {
-        //     return visitNode(type, visitDeclarationSubtree, isTypeNode);
-        // }
-        // if (!getParseTreeNode(node)) {
-        //     return type ? visitNode(type, visitDeclarationSubtree, isTypeNode) : factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
-        // }
-        // if (node.kind === SyntaxKind.SetAccessor) {
-        //     // Set accessors with no associated type node (from it's param or get accessor return) are `any` since they are never contextually typed right now
-        //     // (The inferred type here will be void, but the old declaration emitter printed `any`, so this replicates that)
-        //     return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
-        // }
-        // errorNameNode = node.name;
-        // let oldDiag: typeof getSymbolAccessibilityDiagnostic;
-        // if (!suppressNewDiagnosticContexts) {
-        //     oldDiag = getSymbolAccessibilityDiagnostic;
-        //     getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNode(node);
-        // }
-        // if (node.kind === SyntaxKind.VariableDeclaration || node.kind === SyntaxKind.BindingElement) {
-        //     return cleanup(resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker));
-        // }
-        // if (
-        //     node.kind === SyntaxKind.Parameter
-        //     || node.kind === SyntaxKind.PropertyDeclaration
-        //     || node.kind === SyntaxKind.PropertySignature
-        // ) {
-        //     if (isPropertySignature(node) || !node.initializer) return cleanup(resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker, shouldUseResolverType));
-        //     return cleanup(resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker, shouldUseResolverType) || resolver.createTypeOfExpression(node.initializer, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker));
-        // }
-        // return cleanup(resolver.createReturnTypeOfSignatureDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker));
-
-        // function cleanup(returnValue: TypeNode | undefined) {
-        //     errorNameNode = undefined;
-        //     if (!suppressNewDiagnosticContexts) {
-        //         getSymbolAccessibilityDiagnostic = oldDiag;
-        //     }
-        //     return returnValue || factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
-        // }
     }
 
     function isDeclarationAndNotVisible(node: NamedDeclaration) {
@@ -1273,9 +1229,7 @@ export function transformDeclarations(context: TransformationContext) {
                     if (isPrivateIdentifier(input.name)) {
                         return cleanup(/*returnValue*/ undefined);
                     }
-                    const accessorType = isolatedDeclarations ?
-                        input.type :
-                        getTypeAnnotationFromAllAccessorDeclarations(input, resolver.getAllAccessorDeclarations(input));
+                    const accessorType = getTypeAnnotationFromAllAccessorDeclarations(input, resolver.getAllAccessorDeclarations(input));
                     return cleanup(factory.updateGetAccessorDeclaration(
                         input,
                         ensureModifiers(input),
@@ -2100,24 +2054,6 @@ export function transformDeclarations(context: TransformationContext) {
             }
         }
 
-        function transformAccessorType(getAccessor?: GetAccessorDeclaration, setAccessor?: SetAccessorDeclaration) {
-            let getAccessorType;
-            if (getAccessor?.type) {
-                getAccessorType = getAccessor.type;
-            }
-
-            let setAccessorType;
-            if (setAccessor) {
-                const param = setAccessor.parameters.find(p => !isThisIdentifier(p.name));
-                if (param?.type) {
-                    const parameterType = param.type;
-                    setAccessorType = parameterType;
-                }
-            }
-
-            return { getAccessorType, setAccessorType };
-        }
-
         function findNearestDeclaration(node: Node) {
             const result = findAncestor(node, n => isExportAssignment(n) || (isStatement(n) ? "quit" : isVariableDeclaration(n) || isPropertyDeclaration(n) || isParameter(n)));
             return result as VariableDeclaration | PropertyDeclaration | ParameterDeclaration | ExportAssignment | undefined;
@@ -2223,7 +2159,7 @@ export function transformDeclarations(context: TransformationContext) {
                     }
                     else {
                         const type = asExpression.type;
-                        return visitTypeAndClone(type);
+                        return visitType(type);
                     }
                 case SyntaxKind.PrefixUnaryExpression:
                     const prefixOp = node as PrefixUnaryExpression;
@@ -2233,14 +2169,14 @@ export function transformDeclarations(context: TransformationContext) {
                                 case SyntaxKind.NumericLiteral:
                                     switch (prefixOp.operator) {
                                         case SyntaxKind.MinusToken:
-                                            return factory.createLiteralTypeNode(deepClone(prefixOp));
+                                            return factory.createLiteralTypeNode(prefixOp);
                                         case SyntaxKind.PlusToken:
-                                            return factory.createLiteralTypeNode(deepClone(prefixOp.operand as LiteralExpression));
+                                            return factory.createLiteralTypeNode(prefixOp.operand as LiteralExpression);
                                     }
                                     break;
                                 case SyntaxKind.BigIntLiteral:
                                     if (prefixOp.operator === SyntaxKind.MinusToken) {
-                                        return factory.createLiteralTypeNode(deepClone(prefixOp));
+                                        return factory.createLiteralTypeNode(prefixOp);
                                     }
                             }
                         }
@@ -2380,10 +2316,10 @@ export function transformDeclarations(context: TransformationContext) {
             enclosingDeclaration = fnNode;
 
             const returnType = !fnNode.type ? typeInferenceFallback(fnNode, createReturnTypeError(fnNode)) :
-                visitTypeAndClone(fnNode.type);
+                visitType(fnNode.type);
             const fnTypeNode = factory.createFunctionTypeNode(
-                visitNodes(fnNode.typeParameters, visitDeclarationSubtree, isTypeParameterDeclaration)?.map(deepClone),
-                fnNode.parameters.map(p => deepClone(ensureParameter(p))),
+                visitNodes(fnNode.typeParameters, visitDeclarationSubtree, isTypeParameterDeclaration),
+                fnNode.parameters.map(p => ensureParameter(p)),
                 returnType,
             );
             enclosingDeclaration = oldEnclosingDeclaration;
@@ -2462,7 +2398,7 @@ export function transformDeclarations(context: TransformationContext) {
             for (const prop of objectLiteral.properties) {
                 Debug.assert(!isShorthandPropertyAssignment(prop) && !isSpreadAssignment(prop));
 
-                let name;
+                let name = prop.name;
                 if (isComputedPropertyName(prop.name)) {
                     let computedNameExpressionType;
                     if (isEntityNameExpression(prop.name.expression)) {
@@ -2493,8 +2429,6 @@ export function transformDeclarations(context: TransformationContext) {
                     }
                 }
 
-                name ??= deepClone(prop.name);
-
                 let newProp;
                 if (isMethodDeclaration(prop)) {
                     newProp = transformMethodDeclarationToSignature(prop, name, inferenceFlags);
@@ -2516,11 +2450,6 @@ export function transformDeclarations(context: TransformationContext) {
                 }
 
                 if (newProp) {
-                    const commentRange = getCommentRange(prop);
-                    setCommentRange(newProp, {
-                        pos: commentRange.pos,
-                        end: newProp.name.end,
-                    });
                     properties.push(newProp);
                 }
             }
@@ -2534,9 +2463,9 @@ export function transformDeclarations(context: TransformationContext) {
             try {
                 const returnType = method.type === undefined ?
                     typeInferenceFallback(method, createReturnTypeError(method)) :
-                    visitTypeAndClone(method.type);
-                const typeParameters = visitNodes(method.typeParameters, visitDeclarationSubtree, isTypeParameterDeclaration)?.map(deepClone);
-                const parameters = method.parameters.map(p => deepClone(ensureParameter(p)));
+                    visitType(method.type);
+                const typeParameters = visitNodes(method.typeParameters, visitDeclarationSubtree, isTypeParameterDeclaration);
+                const parameters = method.parameters.map(p => ensureParameter(p));
                 if (inferenceFlags & InitializeTransformNarrowBehavior.AsConst) {
                     return factory.createPropertySignature(
                         [factory.createModifier(SyntaxKind.ReadonlyKeyword)],
@@ -2569,18 +2498,19 @@ export function transformDeclarations(context: TransformationContext) {
         }
 
         function transformAccessor(accessor: GetAccessorDeclaration | SetAccessorDeclaration) {
-            const { getAccessor, setAccessor, firstAccessor } = resolver.getAllAccessorDeclarations(accessor);
-            const accessorType = transformAccessorType(getAccessor, setAccessor);
+            const allAccessors = resolver.getAllAccessorDeclarations(accessor);
+            const getAccessorType = allAccessors.getAccessor && getTypeAnnotationFromAccessor(allAccessors.getAccessor);
+            const setAccessorType = allAccessors.setAccessor && getTypeAnnotationFromAccessor(allAccessors.setAccessor);
             // We have types for both accessors, we can't know if they are the same type so we keep both accessors
-            if (accessorType.getAccessorType !== undefined && accessorType.setAccessorType !== undefined) {
-                const parameters = accessor.parameters.map(p => deepClone(ensureParameter(p)));
+            if (getAccessorType !== undefined && setAccessorType !== undefined) {
+                const parameters = accessor.parameters.map(p => ensureParameter(p));
 
                 if (isGetAccessor(accessor)) {
                     return factory.createGetAccessorDeclaration(
                         [],
                         accessor.name,
                         parameters,
-                        visitTypeAndClone(accessorType.getAccessorType),
+                        visitType(getAccessorType),
                         /*body*/ undefined,
                     );
                 }
@@ -2593,13 +2523,13 @@ export function transformDeclarations(context: TransformationContext) {
                     );
                 }
             }
-            else if (firstAccessor === accessor) {
-                const foundType = accessorType.getAccessorType ?? accessorType.setAccessorType;
+            else if (allAccessors.firstAccessor === accessor) {
+                const foundType = getAccessorType ?? setAccessorType;
                 const propertyType = foundType === undefined ?
-                    typeInferenceFallback(accessor, createAccessorTypeError(getAccessor, setAccessor)) :
-                    visitTypeAndClone(foundType);
+                    typeInferenceFallback(accessor, createAccessorTypeError(allAccessors.getAccessor, allAccessors.setAccessor)) :
+                    visitType(foundType);
                 return factory.createPropertySignature(
-                    setAccessor === undefined ? [factory.createModifier(SyntaxKind.ReadonlyKeyword)] : [],
+                    allAccessors.setAccessor === undefined ? [factory.createModifier(SyntaxKind.ReadonlyKeyword)] : [],
                     accessor.name,
                     /*questionToken*/ undefined,
                     propertyType,
@@ -2623,37 +2553,8 @@ export function transformDeclarations(context: TransformationContext) {
             }
         }
 
-        function visitTypeAndClone(type: TypeNode) {
-            const visitedType = visitNode(type, visitDeclarationSubtree, isTypeNode)!;
-            return deepClone(visitedType);
-        }
-
-        function deepClone<T extends Node>(node: T): T {
-            // Can we reuse all nodes?
-            switch (node.kind) {
-                case SyntaxKind.StringLiteral:
-                    return node;
-            }
-            const clonedNode = visitEachChild(node, deepClone, nullTransformationContext, deepCloneNodes);
-            // If node has children visitEachChild will already return a new node
-            if (clonedNode !== node) {
-                return clonedNode;
-            }
-            return setTextRange(factory.cloneNode(node), node);
-            function deepCloneNodes(
-                nodes: NodeArray<Node> | undefined,
-                visitor: Visitor,
-                test?: (node: Node) => boolean,
-                start?: number,
-                count?: number,
-            ): NodeArray<Node> | undefined {
-                if (nodes && nodes.length === 0) {
-                    // Ensure we explicitly make a copy of an empty array; visitNodes will not do this unless the array has elements,
-                    // which can lead to us reusing the same empty NodeArray more than once within the same AST during type noding.
-                    return setTextRange(factory.createNodeArray(/*elements*/ undefined, nodes.hasTrailingComma), nodes);
-                }
-                return visitNodes(nodes, visitor, test, start, count);
-            }
+        function visitType(type: TypeNode) {
+            return visitNode(type, visitDeclarationSubtree, isTypeNode)!;
         }
 
         function addUndefinedInUnion(type: TypeNode) {
@@ -2785,10 +2686,9 @@ export function transformDeclarations(context: TransformationContext) {
                 }
             }
             else if (isAccessor(node)) {
-                const { getAccessor, setAccessor } = resolver.getAllAccessorDeclarations(node);
-                const accessorType = transformAccessorType(getAccessor, setAccessor);
-                const type = accessorType.getAccessorType ?? accessorType.setAccessorType;
-                return type ?? typeInferenceFallback(node, createAccessorTypeError(getAccessor, setAccessor));
+                const allAccessors = resolver.getAllAccessorDeclarations(node)
+                const accessorType = getTypeAnnotationFromAllAccessorDeclarations(node, allAccessors);
+                return accessorType ?? typeInferenceFallback(node, createAccessorTypeError(allAccessors.getAccessor, allAccessors.setAccessor));
             }
             else {
                 if (isInterfaceDeclaration(node.parent) || isTypeLiteralNode(node.parent)) {
