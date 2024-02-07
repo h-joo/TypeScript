@@ -1,5 +1,5 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Enums are not fixed
+// @isolatedDeclarationFixedDiffReason: Fixing enum values is not supported
 
 enum e1 {
     a,

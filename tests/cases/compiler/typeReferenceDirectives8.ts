@@ -4,7 +4,7 @@
 // @traceResolution: true
 // @types: lib
 // @currentDirectory: /
-// @isolatedDeclarationDiffReason: Requires adding a type reference directive that only TSC can detect
+// @isolatedDeclarationDiffReason: TSC adds type reference directives.
 
 // @filename: /types/lib/index.d.ts
 

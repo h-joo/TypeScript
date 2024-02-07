@@ -1,4 +1,4 @@
-// [[Reason: Can't auto-fix expando functions.]] ////
+// [[Reason: Function declarations are not fixed]] ////
 
 //// [tests/cases/compiler/isolatedDeclarationErrors.ts] ////
 

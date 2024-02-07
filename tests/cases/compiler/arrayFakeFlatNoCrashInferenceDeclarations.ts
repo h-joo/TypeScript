@@ -1,7 +1,7 @@
 // @strict: true
 // @lib: es2020
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Semantically invalid, already has a cyclic error type
+// @isolatedDeclarationFixedDiffReason: Semantically invalid. TSC does not emit .d.ts
 type BadFlatArray<Arr, Depth extends number> = {obj: {
     "done": Arr,
     "recur": Arr extends ReadonlyArray<infer InnerArr>

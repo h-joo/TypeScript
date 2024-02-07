@@ -13,6 +13,7 @@ interface $ { x }
 
 
 //// [/app.d.ts]
+/// <reference types="lib" />
 interface A {
     x: $;
 }

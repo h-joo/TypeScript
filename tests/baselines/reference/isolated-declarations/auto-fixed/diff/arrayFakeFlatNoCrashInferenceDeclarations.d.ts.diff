@@ -1,4 +1,4 @@
-// [[Reason: Semantically invalid, already has a cyclic error type]] ////
+// [[Reason: Semantically invalid. TSC does not emit .d.ts]] ////
 
 //// [tests/cases/compiler/arrayFakeFlatNoCrashInferenceDeclarations.ts] ////
 

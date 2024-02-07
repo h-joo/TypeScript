@@ -1,7 +1,7 @@
 // @strict: true
 // @declaration: true
 // @filename: a.d.ts
-// @isolatedDeclarationFixedDiffReason: There will be separate TS error on 'timestamp', but fixer does not know about this so it'll try to fix the missing type.
+// @isolatedDeclarationFixedDiffReason: Fix would require symbols that can't be named.
 export declare const timestampSymbol: unique symbol;
 
 export declare const Timestamp: {

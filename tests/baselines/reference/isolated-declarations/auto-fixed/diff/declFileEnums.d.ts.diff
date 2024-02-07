@@ -1,4 +1,4 @@
-// [[Reason: Enums are not fixed]] ////
+// [[Reason: Fixing enum values is not supported]] ////
 
 //// [tests/cases/compiler/declFileEnums.ts] ////
 

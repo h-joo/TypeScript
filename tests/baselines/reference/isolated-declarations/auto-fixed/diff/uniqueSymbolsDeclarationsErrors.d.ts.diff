@@ -1,4 +1,4 @@
-// [[Reason: Can't fix class expressions.]] ////
+// [[Reason: Can't fix class expressions]] ////
 
 //// [tests/cases/conformance/types/uniqueSymbol/uniqueSymbolsDeclarationsErrors.ts] ////
 

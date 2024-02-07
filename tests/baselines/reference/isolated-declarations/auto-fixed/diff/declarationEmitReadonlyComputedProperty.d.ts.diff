@@ -1,4 +1,4 @@
-// [[Reason: There will be separate TS error on 'spread', but fixer does not know about this so it'll try to fix the missing type.]] ////
+// [[Reason: Fix would require symbols that can't be named.]] ////
 
 //// [tests/cases/compiler/declarationEmitReadonlyComputedProperty.ts] ////
 

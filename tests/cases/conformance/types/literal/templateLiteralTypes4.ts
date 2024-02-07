@@ -1,7 +1,7 @@
 // @strict: true
 // @target: esnext
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Enums are not fixed
+// @isolatedDeclarationFixedDiffReason: Fixing enum values is not supported
 
 // infer from number
 type TNumber0 = "100" extends `${infer N extends number}` ? N : never; // 100

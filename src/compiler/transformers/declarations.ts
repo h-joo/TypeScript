@@ -665,9 +665,6 @@ export function transformDeclarations(context: TransformationContext) {
                     Diagnostics.Declaration_emit_for_this_expression_requires_adding_a_type_reference_directive_to_0_with_isolatedDeclarations,
                     specifier,
                 ));
-                if(isolatedDeclarationsNoFallback) {
-                    return undefined;
-                }
             }
             return { fileName: specifier, pos: -1, end: -1, ...(mode ? { resolutionMode: mode } : undefined) };
         }

@@ -15,6 +15,7 @@ function foo(): Error2 {
 
 
 //// [/app.d.ts]
+/// <reference types="node" />
 declare function foo(): Error2;
 
 /// [Errors] ////

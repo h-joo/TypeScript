@@ -1,6 +1,6 @@
 // @declaration: true
 // @lib: es2015
-// @isolatedDeclarationFixedDiffReason: There will be separate TS error on 'spread', but fixer does not know about this so it'll try to fix the missing type.
+// @isolatedDeclarationFixedDiffReason: Fix would require symbols that can't be named.
 
 // @filename: bug.ts
 export const SYMBOL = Symbol()

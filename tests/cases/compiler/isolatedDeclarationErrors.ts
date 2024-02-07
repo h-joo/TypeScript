@@ -1,6 +1,6 @@
 // @declaration: true
 // @isolatedDeclarations: true
-// @isolatedDeclarationFixedDiffReason: Can't auto-fix expando functions.
+// @isolatedDeclarationFixedDiffReason: Function declarations are not fixed
 // @target: ESNext
 
 function errorOnAssignmentBelowDecl(): void {}

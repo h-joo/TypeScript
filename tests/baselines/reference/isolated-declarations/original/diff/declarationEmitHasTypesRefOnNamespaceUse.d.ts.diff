@@ -5,9 +5,11 @@
 ===================================================================
 --- TSC	declarations
 +++ DTE	declarations
-@@ -2,24 +2,4 @@
+@@ -1,26 +1,5 @@
+ 
  
  //// [/src/index.d.ts]
+-/// <reference types="dep" />
  declare class Src implements NS.Dep {
  }
 -
