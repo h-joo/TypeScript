@@ -47591,7 +47591,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         // Get type of the symbol if this is the valid symbol otherwise get type at location
         const symbol = getSymbolOfDeclaration(declaration);
         let type = symbol && !(symbol.flags & (SymbolFlags.TypeLiteral | SymbolFlags.Signature))
-            ? getWidenedLiteralType(getTypeOfSymbol(symbol))
+            ? getWidenedType(getWidenedLiteralType(getTypeOfSymbol(symbol)))
             : errorType;
         if (
             type.flags & TypeFlags.UniqueESSymbol &&
