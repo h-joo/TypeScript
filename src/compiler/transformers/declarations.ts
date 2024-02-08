@@ -2523,7 +2523,8 @@ export function transformDeclarations(context: TransformationContext) {
                 const parameters = accessor.parameters.map(p => ensureParameter(p));
 
                 if (isGetAccessor(accessor)) {
-                    return factory.createGetAccessorDeclaration(
+                    return factory.updateGetAccessorDeclaration(
+                        accessor,
                         [],
                         name,
                         parameters,
@@ -2532,7 +2533,8 @@ export function transformDeclarations(context: TransformationContext) {
                     );
                 }
                 else {
-                    return factory.createSetAccessorDeclaration(
+                    return factory.updateSetAccessorDeclaration(
+                        accessor,
                         [],
                         name,
                         parameters,
@@ -2545,12 +2547,15 @@ export function transformDeclarations(context: TransformationContext) {
                 const propertyType = foundType === undefined ?
                     typeInferenceFallback(accessor, createAccessorTypeError(allAccessors.getAccessor, allAccessors.setAccessor)) :
                     visitType(foundType);
-                return factory.createPropertySignature(
+                const propertySignature = factory.createPropertySignature(
                     allAccessors.setAccessor === undefined ? [factory.createModifier(SyntaxKind.ReadonlyKeyword)] : [],
                     name,
                     /*questionToken*/ undefined,
                     propertyType,
                 );
+
+                setCommentRange(propertySignature, accessor);
+                return propertySignature;
             }
         }
         function createUndefinedTypeNode() {
