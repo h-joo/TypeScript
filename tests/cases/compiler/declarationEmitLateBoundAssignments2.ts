@@ -1,7 +1,7 @@
 // @strict: true
 // @declaration: true
 // @target: es6
-// @isolatedDeclarationFixedDiffReason: Function declarations are not fixed
+// @isolatedDeclarationFixedDiffReason: Cannot resolve non-static property names
 
 // https://github.com/microsoft/TypeScript/issues/54811
 

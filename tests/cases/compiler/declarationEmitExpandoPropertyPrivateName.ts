@@ -1,5 +1,5 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Function declarations are not fixed
+// @isolatedDeclarationFixedDiffReason: Cannot name internal type
 // @filename: a.ts
 interface I {}
 export function f(): I { return null as I; }
