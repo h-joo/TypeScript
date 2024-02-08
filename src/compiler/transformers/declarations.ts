@@ -10,6 +10,7 @@ import {
     ArrayLiteralExpression,
     ArrowFunction,
     AsExpression,
+    assertType,
     BigIntLiteral,
     BindingElement,
     BindingName,
@@ -2046,7 +2047,7 @@ export function transformDeclarations(context: TransformationContext) {
         function hasParseError(node: Node) {
             return !!(node.flags & NodeFlags.ThisNodeHasError);
         }
-        function reportError(node: Node, message: DiagnosticWithLocation) {
+        function reportIsolatedDeclarationError(node: Node, message: DiagnosticWithLocation) {
             // Do not report errors on nodes with other errors.
             if (hasParseError(node)) return;
             if (isolatedDeclarations) {
@@ -2217,13 +2218,13 @@ export function transformDeclarations(context: TransformationContext) {
         function typeInferenceFallback(node: Node, diagMessage?: DiagnosticWithLocation): TypeNode {
             if (isolatedDeclarationsNoFallback) {
                 if (diagMessage) {
-                    reportError(node, diagMessage);
+                    reportIsolatedDeclarationError(node, diagMessage);
                 }
                 return makeInvalidType();
             }
             const type = typeInferenceFallbackWorker(node);
             if (isolatedDeclarations && diagMessage) {
-                reportError(node, diagMessage);
+                reportIsolatedDeclarationError(node, diagMessage);
             }
             return type ?? makeInvalidType();
         }
@@ -2276,6 +2277,7 @@ export function transformDeclarations(context: TransformationContext) {
             return typeNode ?? makeInvalidType();
         }
         function hasInferredType(node: Node): node is HasInferredType {
+            Debug.type<HasInferredType>(node);
             switch (node.kind) {
                 case SyntaxKind.FunctionDeclaration:
                 case SyntaxKind.MethodDeclaration:
@@ -2294,6 +2296,7 @@ export function transformDeclarations(context: TransformationContext) {
                 case SyntaxKind.PropertyAssignment:
                     return true;
                 default:
+                    assertType<never>(node);
                     return false;
             }
         }
@@ -2328,7 +2331,7 @@ export function transformDeclarations(context: TransformationContext) {
         function canGetTypeFromArrayLiteral(arrayLiteral: ArrayLiteralExpression) {
             for (const element of arrayLiteral.elements) {
                 if (isSpreadElement(element)) {
-                    reportError(element, createArrayLiteralError(element));
+                    reportIsolatedDeclarationError(element, createArrayLiteralError(element));
                     return false;
                 }
             }
@@ -2366,11 +2369,11 @@ export function transformDeclarations(context: TransformationContext) {
                     break; // Bail if parse errors
                 }
                 if (isShorthandPropertyAssignment(prop)) {
-                    reportError(prop, createObjectLiteralError(prop));
+                    reportIsolatedDeclarationError(prop, createObjectLiteralError(prop));
                     result = false;
                 }
                 else if (isSpreadAssignment(prop)) {
-                    reportError(prop, createObjectLiteralError(prop));
+                    reportIsolatedDeclarationError(prop, createObjectLiteralError(prop));
                     result = false;
                 }
                 else if (hasParseError(prop.name)) {
@@ -2384,7 +2387,7 @@ export function transformDeclarations(context: TransformationContext) {
                 else if (isComputedPropertyName(prop.name)) {
                     const expression = prop.name.expression;
                     if (!isPrimitiveLiteralValue(expression, /*includeBigInt*/ false) && !isEntityNameExpression(expression)) {
-                        reportError(prop, createObjectLiteralError(prop.name));
+                        reportIsolatedDeclarationError(prop, createObjectLiteralError(prop.name));
                         result = false;
                     }
                 }
@@ -2410,7 +2413,7 @@ export function transformDeclarations(context: TransformationContext) {
                         getSymbolAccessibilityDiagnostic = oldDiag;
 
                         if (!resolver.isLiteralComputedName(prop.name)) {
-                            reportError(prop.name, createObjectLiteralError(prop.name));
+                            reportIsolatedDeclarationError(prop.name, createObjectLiteralError(prop.name));
                         }
                         if (!isEntityNameAccessible) {
                             computedNameExpressionType = typeInferenceFallback(prop.name.expression, createObjectLiteralError(prop.name));
@@ -2648,7 +2651,7 @@ export function transformDeclarations(context: TransformationContext) {
                                                 p.valueDeclaration.left :
                                                 p.valueDeclaration;
 
-                                            reportError(
+                                            reportIsolatedDeclarationError(
                                                 errorTarget,
                                                 createDiagnosticForNode(
                                                     errorTarget,
