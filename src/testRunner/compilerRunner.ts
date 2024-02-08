@@ -605,7 +605,7 @@ class IsolatedDeclarationTest extends CompilerTestBase {
         ts.Diagnostics.Arrays_with_spread_elements_can_t_inferred_with_isolatedDeclarations,
         ts.Diagnostics.Only_const_arrays_can_be_inferred_with_isolatedDeclarations,
         ts.Diagnostics.Default_exports_can_t_be_inferred_with_isolatedDeclarations,
-        ts.Diagnostics.Reference_directives_are_not_supported_with_isolatedDeclarations,
+        ts.Diagnostics.Declaration_emit_for_this_parameter_requires_implicitly_adding_undefined_to_it_s_type_This_is_not_supported_with_isolatedDeclarations,
         ts.Diagnostics.Inference_from_class_expressions_is_not_supported_with_isolatedDeclarations,
     ].map(d => d.code));
     protected get baselinePath() {
@@ -749,20 +749,7 @@ export class FixedIsolatedDeclarationTest extends IsolatedDeclarationTest {
     }
     private static referenceDirectiveErrors = new Set([
         ts.Diagnostics.Declaration_emit_for_this_expression_requires_adding_a_type_reference_directive_to_0_with_isolatedDeclarations.code,
-        ts.Diagnostics.Reference_directives_are_not_supported_with_isolatedDeclarations.code,
     ]);
-    constructor(compilerEnvironment: CompilerTestEnvironment) {
-        super(compilerEnvironment);
-
-        // Suppress diff for tests with reference directives.
-        if (
-            this.dteDiagnostics.some(d => d.code === ts.Diagnostics.Reference_directives_are_not_supported_with_isolatedDeclarations.code)
-        ) {
-            this.isOutputMapEquivalent = true;
-            this.isDiagnosticEquivalent = true;
-            this.isOutputEquivalent = true;
-        }
-    }
 
     protected override get baselinePath() {
         return "isolated-declarations/auto-fixed";

@@ -1,0 +1,82 @@
+// [[Reason: Implicit undefined in parameter can only be detected by TSC.]] ////
+
+//// [tests/cases/compiler/defaultParameterAddsUndefinedWithStrictNullChecks.ts] ////
+
+===================================================================
+--- TSC	declarations
++++ DTE	declarations
+@@ -1,12 +1,12 @@
+ 
+ 
+ //// [defaultParameterAddsUndefinedWithStrictNullChecks.d.ts]
+ declare function f(addUndefined1?: string, addUndefined2?: number): invalid;
+-declare function g(addUndefined: invalid, addDefined: number): invalid;
++declare function g(addUndefined: string, addDefined: number): invalid;
+ declare let total: invalid;
+-declare function foo1(x: invalid, b: number): invalid;
+-declare function foo2(x: invalid, b: number): invalid;
++declare function foo1(x: string, b: number): invalid;
++declare function foo2(x: string, b: number): invalid;
+ declare function foo3(x: string | undefined, b: number): invalid;
+ declare function foo4(x: string | undefined, b: number): invalid;
+ type OptionalNullableString = string | null | undefined;
+ declare function allowsNull(val?: OptionalNullableString): invalid;
+@@ -17,23 +17,20 @@
+ /// [Errors] ////
+ 
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(1,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(4,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+-defaultParameterAddsUndefinedWithStrictNullChecks.ts(4,12): error TS9025: Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(7,13): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(10,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+-defaultParameterAddsUndefinedWithStrictNullChecks.ts(10,15): error TS9025: Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(14,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+-defaultParameterAddsUndefinedWithStrictNullChecks.ts(14,15): error TS9025: Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(18,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(23,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(29,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(44,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(51,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ defaultParameterAddsUndefinedWithStrictNullChecks.ts(51,28): error TS9011: Parameter must have an explicit type annotation with --isolatedDeclarations.
+ 
+ 
+-==== defaultParameterAddsUndefinedWithStrictNullChecks.ts (14 errors) ====
++==== defaultParameterAddsUndefinedWithStrictNullChecks.ts (11 errors) ====
+     function f(addUndefined1 = "J", addUndefined2?: number) {
+              ~
+ !!! error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ !!! related TS9031 defaultParameterAddsUndefinedWithStrictNullChecks.ts:1:10: Add a return type to the function declaration.
+@@ -42,11 +39,8 @@
+     function g(addUndefined = "J", addDefined: number) {
+              ~
+ !!! error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ !!! related TS9031 defaultParameterAddsUndefinedWithStrictNullChecks.ts:4:10: Add a return type to the function declaration.
+-               ~~~~~~~~~~~~~~~~~~
+-!!! error TS9025: Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.
+-!!! related TS9028 defaultParameterAddsUndefinedWithStrictNullChecks.ts:4:12: Add a type annotation to the parameter addUndefined.
+         return addUndefined.length + addDefined;
+     }
+     let total = f() + f('a', 1) + f('b') + f(undefined, 2);
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+@@ -57,21 +51,15 @@
+     function foo1(x: string = "string", b: number) {
+              ~~~~
+ !!! error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ !!! related TS9031 defaultParameterAddsUndefinedWithStrictNullChecks.ts:10:10: Add a return type to the function declaration.
+-                  ~~~~~~~~~~~~~~~~~~~~
+-!!! error TS9025: Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.
+-!!! related TS9028 defaultParameterAddsUndefinedWithStrictNullChecks.ts:10:15: Add a type annotation to the parameter x.
+         x.length;
+     }
+     
+     function foo2(x = "string", b: number) {
+              ~~~~
+ !!! error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ !!! related TS9031 defaultParameterAddsUndefinedWithStrictNullChecks.ts:14:10: Add a return type to the function declaration.
+-                  ~~~~~~~~~~~~
+-!!! error TS9025: Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.
+-!!! related TS9028 defaultParameterAddsUndefinedWithStrictNullChecks.ts:14:15: Add a type annotation to the parameter x.
+         x.length; // ok, should be string
+     }
+     
+     function foo3(x: string | undefined = "string", b: number) {

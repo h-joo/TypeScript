@@ -50,6 +50,7 @@ import {
     EnumDeclaration,
     ExportAssignment,
     ExportDeclaration,
+    Expression,
     ExpressionWithTypeArguments,
     factory,
     FalseLiteral,
@@ -121,7 +122,6 @@ import {
     isExpandoPropertyDeclaration,
     isExportAssignment,
     isExportDeclaration,
-    isExpression,
     isExpressionWithTypeArguments,
     isExternalModule,
     isExternalModuleAugmentation,
@@ -155,7 +155,6 @@ import {
     isParenthesizedExpression,
     isPrimitiveLiteralValue,
     isPrivateIdentifier,
-    isPropertyAssignment,
     isPropertyDeclaration,
     isPropertySignature,
     isSemicolonClassElement,
@@ -166,7 +165,6 @@ import {
     isSourceFileJS,
     isSourceFileNotJson,
     isSpreadAssignment,
-    isSpreadElement,
     isStatement,
     isStringANonContextualKeyword,
     isStringLiteral,
@@ -222,6 +220,7 @@ import {
     pathContainsNodeModules,
     pathIsRelative,
     PrefixUnaryExpression,
+    PropertyAssignment,
     PropertyDeclaration,
     PropertyName,
     PropertySignature,
@@ -2044,12 +2043,9 @@ export function transformDeclarations(context: TransformationContext) {
         const strictNullChecks = getStrictOptionValue(options, "strictNullChecks");
         return transformInitializerToTypeNode;
 
-        function hasParseError(node: Node) {
-            return !!(node.flags & NodeFlags.ThisNodeHasError);
-        }
         function reportIsolatedDeclarationError(node: Node, message: DiagnosticWithLocation) {
             // Do not report errors on nodes with other errors.
-            if (hasParseError(node)) return;
+            if (node.flags & NodeFlags.ThisNodeHasError) return;
             if (isolatedDeclarations) {
                 context.addDiagnostic(message);
             }
@@ -2111,17 +2107,17 @@ export function transformDeclarations(context: TransformationContext) {
             addRelatedInfo(diag, createDiagnosticForNode(node, relatedSuggestionByDeclarationKind[node.kind], targetStr));
             return diag;
         }
-        function createParameterError(node: ParameterDeclaration) {
+        function createParameterError(node: ParameterDeclaration, message = errorByDeclarationKind[node.kind]) {
             if (isSetAccessor(node.parent)) {
                 const { getAccessor, setAccessor } = resolver.getAllAccessorDeclarations(node.parent);
                 return createAccessorTypeError(getAccessor, setAccessor);
             }
-            const diag = createDiagnosticForNode(node, errorByDeclarationKind[node.kind]);
+            const diag = createDiagnosticForNode(node, message);
             const targetStr = getTextOfNode(node.name, /*includeTrivia*/ false);
             addRelatedInfo(diag, createDiagnosticForNode(node, relatedSuggestionByDeclarationKind[node.kind], targetStr));
             return diag;
         }
-        function createExpressionError(node: Node) {
+        function createExpressionError(node: Expression) {
             const parentDeclaration = findNearestDeclaration(node);
             let diag: DiagnosticWithLocation;
             if (parentDeclaration) {
@@ -2142,13 +2138,33 @@ export function transformDeclarations(context: TransformationContext) {
             }
             return diag;
         }
-        function transformExpressionToType(node: Node, inferenceFlags: InitializeTransformNarrowBehavior = InitializeTransformNarrowBehavior.None): TypeNode {
+        function transformExpressionToType(node: Expression, inferenceFlags: InitializeTransformNarrowBehavior = InitializeTransformNarrowBehavior.None): TypeNode {
+            const typeNode = transformExpressionToTypeWorker(node, inferenceFlags);
+            const addUndefined = !!(inferenceFlags & InitializeTransformNarrowBehavior.AddUndefined);
+            if(!typeNode) {
+                return typeInferenceFallback(node, createExpressionError(node), addUndefined);
+            }
+            if(addUndefined) {
+                return addUndefinedInUnion(typeNode);
+            }
+            return typeNode;
+        }
+        function transformExpressionToTypeWorker(node: Expression, inferenceFlags: InitializeTransformNarrowBehavior = InitializeTransformNarrowBehavior.None): TypeNode | undefined {
             switch (node.kind) {
                 case SyntaxKind.ParenthesizedExpression:
                     return transformExpressionToType((node as ParenthesizedExpression).expression, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
                 case SyntaxKind.Identifier:
+                    if(resolver.isUndefinedIdentifier(node as Identifier)) {
+                        return createUndefinedTypeNode();
+                    }
+                    break;
                 case SyntaxKind.NullKeyword:
-                    return typeInferenceFallback(node, createExpressionError(node));
+                    if (strictNullChecks) {
+                        return factory.createLiteralTypeNode(factory.createNull());
+                    }
+                    else {
+                        return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
+                    }
                 case SyntaxKind.ArrowFunction:
                 case SyntaxKind.FunctionExpression:
                     return transformFunctionExpressionOrArrowFunction(node as ArrowFunction | FunctionExpression);
@@ -2160,6 +2176,9 @@ export function transformDeclarations(context: TransformationContext) {
                     }
                     else {
                         const type = asExpression.type;
+                        if(type.kind === SyntaxKind.TypeReference && inferenceFlags & InitializeTransformNarrowBehavior.NoTypeReferences) {
+                            return typeInferenceFallback(node, createExpressionError(node), !!(inferenceFlags & InitializeTransformNarrowBehavior.AddUndefined))
+                        }
                         return visitType(type);
                     }
                 case SyntaxKind.PrefixUnaryExpression:
@@ -2212,23 +2231,31 @@ export function transformDeclarations(context: TransformationContext) {
                 case SyntaxKind.ObjectLiteralExpression:
                     return transformObjectLiteralExpressionToType(node as ObjectLiteralExpression, inferenceFlags);
             }
-
-            return typeInferenceFallback(node, createExpressionError(node));
+            return undefined
         }
-        function typeInferenceFallback(node: Node, diagMessage?: DiagnosticWithLocation): TypeNode {
-            if (isolatedDeclarationsNoFallback) {
-                if (diagMessage) {
-                    reportIsolatedDeclarationError(node, diagMessage);
-                }
-                return makeInvalidType();
-            }
-            const type = typeInferenceFallbackWorker(node);
+        function requiresImplicitUndefined(node: ParameterDeclaration) {
+            return resolver.requiresAddingImplicitUndefined(node);
+        }
+        function typeInferenceFallback(node: Exclude<HasInferredType, ParameterDeclaration> | Expression, diagMessage?: DiagnosticWithLocation, addUndefined?: boolean): TypeNode {
             if (isolatedDeclarations && diagMessage) {
                 reportIsolatedDeclarationError(node, diagMessage);
             }
-            return type ?? makeInvalidType();
+            if(isolatedDeclarationsNoFallback) {
+                return makeInvalidType();
+            }
+            if (hasInferredType(node)) {
+                return typeInferenceFallbackFromDeclaration(node, addUndefined);
+            }
+
+            const parent = findAncestor(node.parent, e => e.kind !== SyntaxKind.ParenthesizedExpression);
+            if (parent && hasInferredType(parent)) {
+                Debug.assert(node.kind !== SyntaxKind.Parameter, "Parameters should go through ensureParameter");
+                return typeInferenceFallbackFromDeclaration(parent);
+            }
+
+            return resolver.createTypeOfExpression(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker) ?? makeInvalidType();
         }
-        function typeInferenceFallbackFromDeclaration(node: HasInferredType) {
+        function typeInferenceFallbackFromDeclaration(node: HasInferredType, addUndefined?: boolean) {
             const savedErrorNameNode = errorNameNode;
             const savedErrorFallbackNode = errorFallbackNode;
             const savedReferenceRequestingNode = referenceRequestingNode;
@@ -2244,14 +2271,15 @@ export function transformDeclarations(context: TransformationContext) {
             }
             switch (node.kind) {
                 case SyntaxKind.PropertyAssignment:
-                    typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags | NodeBuilderFlags.InObjectTypeLiteral, symbolTracker);
+                    typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags | NodeBuilderFlags.InObjectTypeLiteral, symbolTracker, addUndefined);
+                    resolver.createTypeOfDeclaration(node.parent.parent as any, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker, addUndefined);
                     break;
                 case SyntaxKind.Parameter:
                 case SyntaxKind.PropertySignature:
                 case SyntaxKind.PropertyDeclaration:
                 case SyntaxKind.BindingElement:
                 case SyntaxKind.VariableDeclaration:
-                    typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker);
+                    typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker, addUndefined);
                     break;
                 case SyntaxKind.FunctionDeclaration:
                 case SyntaxKind.ConstructSignature:
@@ -2300,20 +2328,6 @@ export function transformDeclarations(context: TransformationContext) {
                     return false;
             }
         }
-        function typeInferenceFallbackWorker(node: Node): TypeNode | undefined {
-            if (hasInferredType(node)) {
-                return typeInferenceFallbackFromDeclaration(node);
-            }
-
-            const parent = findAncestor(node.parent, e => e.kind !== SyntaxKind.ParenthesizedExpression);
-            if (parent && hasInferredType(parent)) {
-                return typeInferenceFallbackFromDeclaration(parent);
-            }
-
-            if (isExpression(node)) {
-                return resolver.createTypeOfExpression(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker);
-            }
-        }
         function transformFunctionExpressionOrArrowFunction(fnNode: FunctionExpression | ArrowFunction) {
             const oldEnclosingDeclaration = enclosingDeclaration;
             enclosingDeclaration = fnNode;
@@ -2330,8 +2344,8 @@ export function transformDeclarations(context: TransformationContext) {
         }
         function canGetTypeFromArrayLiteral(arrayLiteral: ArrayLiteralExpression) {
             for (const element of arrayLiteral.elements) {
-                if (isSpreadElement(element)) {
-                    reportIsolatedDeclarationError(element, createArrayLiteralError(element));
+                if (element.kind === SyntaxKind.SpreadElement) {
+                    reportIsolatedDeclarationError(element, createArrayLiteralError(element as SpreadElement));
                     return false;
                 }
             }
@@ -2346,8 +2360,8 @@ export function transformDeclarations(context: TransformationContext) {
             }
             const elementTypesInfo: TypeNode[] = [];
             for (const element of arrayLiteral.elements) {
-                Debug.assert(!isSpreadElement(element));
-                if (isOmittedExpression(element)) {
+                Debug.assert(element.kind !== SyntaxKind.SpreadElement);
+                if (element.kind === SyntaxKind.OmittedExpression) {
                     elementTypesInfo.push(
                         createUndefinedTypeNode(),
                     );
@@ -2364,27 +2378,23 @@ export function transformDeclarations(context: TransformationContext) {
         function canGetTypeFromObjectLiteral(objectLiteral: ObjectLiteralExpression) {
             let result = true;
             for (const prop of objectLiteral.properties) {
-                if (hasParseError(prop)) {
+                if (prop.flags & NodeFlags.ThisNodeHasError) {
                     result = false;
                     break; // Bail if parse errors
                 }
-                if (isShorthandPropertyAssignment(prop)) {
+                if (prop.kind === SyntaxKind.ShorthandPropertyAssignment || prop.kind === SyntaxKind.SpreadAssignment) {
                     reportIsolatedDeclarationError(prop, createObjectLiteralError(prop));
                     result = false;
                 }
-                else if (isSpreadAssignment(prop)) {
-                    reportIsolatedDeclarationError(prop, createObjectLiteralError(prop));
-                    result = false;
-                }
-                else if (hasParseError(prop.name)) {
+                else if (prop.name.flags & NodeFlags.ThisNodeHasError) {
                     result = false;
                     break; // Bail if parse errors
                 }
-                else if (isPrivateIdentifier(prop.name)) {
+                else if (prop.name.kind === SyntaxKind.PrivateIdentifier) {
                     // Not valid in object literals but the compiler will complain about this, we just ignore it here.
                     result = false;
                 }
-                else if (isComputedPropertyName(prop.name)) {
+                else if (prop.name.kind === SyntaxKind.ComputedPropertyName) {
                     const expression = prop.name.expression;
                     if (!isPrimitiveLiteralValue(expression, /*includeBigInt*/ false) && !isEntityNameExpression(expression)) {
                         reportIsolatedDeclarationError(prop, createObjectLiteralError(prop.name));
@@ -2402,7 +2412,7 @@ export function transformDeclarations(context: TransformationContext) {
                 Debug.assert(!isShorthandPropertyAssignment(prop) && !isSpreadAssignment(prop));
 
                 let name = prop.name;
-                if (isComputedPropertyName(prop.name)) {
+                if (prop.name.kind === SyntaxKind.ComputedPropertyName) {
                     let computedNameExpressionType;
                     if (isEntityNameExpression(prop.name.expression)) {
                         // Check if the symbol is accessible. If not, don't report any errors on it, we'll fall back to the inferred type
@@ -2432,34 +2442,38 @@ export function transformDeclarations(context: TransformationContext) {
                     }
                 }
 
-                let newProp;
-                if (isMethodDeclaration(prop)) {
-                    newProp = transformMethodDeclarationToSignature(prop, name, inferenceFlags);
-                }
-                else if (isPropertyAssignment(prop)) {
-                    const modifiers = inferenceFlags & InitializeTransformNarrowBehavior.AsConst ?
-                        [factory.createModifier(SyntaxKind.ReadonlyKeyword)] :
-                        [];
-                    const typeNode = transformExpressionToType(prop.initializer, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
-                    newProp = factory.createPropertySignature(
-                        modifiers,
-                        name,
-                        /*questionToken*/ undefined,
-                        typeNode,
-                    );
-                }
-                else {
-                    newProp = transformAccessor(prop);
-                }
-
-                if (newProp) {
-                    properties.push(newProp);
+                switch (prop.kind) {
+                    case SyntaxKind.MethodDeclaration:
+                        properties.push(transformMethodDeclarationToSignature(prop, name, inferenceFlags));
+                        break;
+                    case SyntaxKind.PropertyAssignment:
+                        properties.push(transformPropertyAssignment(prop, name, inferenceFlags));
+                        break;
+                    case SyntaxKind.SetAccessor:
+                    case SyntaxKind.GetAccessor:
+                        const newProp = transformAccessor(prop, name);
+                        if(newProp) {
+                            properties.push(newProp); 
+                        }
+                        break;
                 }
             }
 
             return factory.createTypeLiteralNode(properties);
         }
 
+        function transformPropertyAssignment(prop: PropertyAssignment, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
+            const modifiers = inferenceFlags & InitializeTransformNarrowBehavior.AsConst ?
+                [factory.createModifier(SyntaxKind.ReadonlyKeyword)] :
+                [];
+            const typeNode = transformExpressionToType(prop.initializer, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
+            return factory.createPropertySignature(
+                modifiers,
+                name,
+                /*questionToken*/ undefined,
+                typeNode,
+            );
+        }
         function transformMethodDeclarationToSignature(method: MethodDeclaration, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
             const oldEnclosingDeclaration = enclosingDeclaration;
             enclosingDeclaration = method;
@@ -2500,7 +2514,7 @@ export function transformDeclarations(context: TransformationContext) {
             }
         }
 
-        function transformAccessor(accessor: GetAccessorDeclaration | SetAccessorDeclaration) {
+        function transformAccessor(accessor: GetAccessorDeclaration | SetAccessorDeclaration, name: PropertyName) {
             const allAccessors = resolver.getAllAccessorDeclarations(accessor);
             const getAccessorType = allAccessors.getAccessor && getTypeAnnotationFromAccessor(allAccessors.getAccessor);
             const setAccessorType = allAccessors.setAccessor && getTypeAnnotationFromAccessor(allAccessors.setAccessor);
@@ -2511,7 +2525,7 @@ export function transformDeclarations(context: TransformationContext) {
                 if (isGetAccessor(accessor)) {
                     return factory.createGetAccessorDeclaration(
                         [],
-                        accessor.name,
+                        name,
                         parameters,
                         visitType(getAccessorType),
                         /*body*/ undefined,
@@ -2520,7 +2534,7 @@ export function transformDeclarations(context: TransformationContext) {
                 else {
                     return factory.createSetAccessorDeclaration(
                         [],
-                        accessor.name,
+                        name,
                         parameters,
                         /*body*/ undefined,
                     );
@@ -2533,7 +2547,7 @@ export function transformDeclarations(context: TransformationContext) {
                     visitType(foundType);
                 return factory.createPropertySignature(
                     allAccessors.setAccessor === undefined ? [factory.createModifier(SyntaxKind.ReadonlyKeyword)] : [],
-                    accessor.name,
+                    name,
                     /*questionToken*/ undefined,
                     propertyType,
                 );
@@ -2591,38 +2605,24 @@ export function transformDeclarations(context: TransformationContext) {
         }
         function transformInitializerToTypeNodeWorker(node: HasInferredType | ExportAssignment, type: TypeNode | undefined): TypeNode {
             if (isParameter(node)) {
-                let localType: TypeNode;
-
+                const addUndefined = requiresImplicitUndefined(node);
+                if (addUndefined || (!type && !(node.initializer && isIdentifier(node.name)))) {
+                    if(isolatedDeclarations) {
+                        const message = !addUndefined ? undefined:Diagnostics.Declaration_emit_for_this_parameter_requires_implicitly_adding_undefined_to_it_s_type_This_is_not_supported_with_isolatedDeclarations;
+                        reportIsolatedDeclarationError(node, createParameterError(node, message));
+                        if(isolatedDeclarationsNoFallback) {
+                            return makeInvalidType();
+                        }
+                    }
+                    return typeInferenceFallbackFromDeclaration(node, addUndefined);
+                }
                 if (type) {
-                    localType = visitNode(type, visitDeclarationSubtree, isTypeNode)!;
+                    return visitNode(type, visitDeclarationSubtree, isTypeNode)!;
                 }
-                // We do not support inferring to binding patterns
-                // Binding patterns can add properties and default values in the pattern also complicate inference as we have two sources for the property type.
-                else if (node.initializer && isIdentifier(node.name)) {
-                    localType = transformExpressionToType(node.initializer);
+                if(node.initializer) {
+                    return transformExpressionToType(node.initializer);
                 }
-                else {
-                    localType = typeInferenceFallback(node, createParameterError(node));
-                }
-
-                if (strictNullChecks) {
-                    const isOptional = resolver.isOptionalParameter(node);
-                    /**
-                     * If a parameter with a default value is not optional we need to add undefined
-                     * function x(o = "", v: string)
-                     */
-                    if (node.initializer && !isOptional) {
-                        localType = addUndefinedInUnion(localType);
-                    }
-                    /**
-                     * Constructor properties that are optional must have | undefined included to work well with exactOptionalPropertyTypes
-                     * constructor(public x?: number) -> x?: number | undefined
-                     */
-                    if (isOptional && !node.initializer && hasSyntacticModifier(node, ModifierFlags.ParameterPropertyModifier)) {
-                        localType = addUndefinedInUnion(localType);
-                    }
-                }
-                return localType;
+                Debug.fail("If parameter does not have type or initializer it should fall back to inference above");
             }
             else if (isExportAssignment(node)) {
                 return transformExpressionToType(node.expression, InitializeTransformNarrowBehavior.KeepLiterals);
@@ -2675,11 +2675,8 @@ export function transformDeclarations(context: TransformationContext) {
             }
             else if (isPropertyDeclaration(node) || isPropertySignature(node)) {
                 if (node.initializer) {
-                    let localType = transformExpressionToType(node.initializer);
-                    if (isOptionalDeclaration(node)) {
-                        localType = addUndefinedInUnion(localType);
-                    }
-                    return localType;
+                    const optionalFlag = isOptionalDeclaration(node) ? InitializeTransformNarrowBehavior.NoTypeReferences | InitializeTransformNarrowBehavior.AddUndefined: InitializeTransformNarrowBehavior.None;
+                    return transformExpressionToType(node.initializer, optionalFlag);
                 }
                 else if (isInterfaceDeclaration(node.parent) || isTypeLiteralNode(node.parent)) {
                     return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
@@ -2857,9 +2854,11 @@ function isProcessedComponent(node: Node): node is ProcessedComponent {
 const enum InitializeTransformNarrowBehavior {
     None = 0,
     AsConst = 1,
-    KeepLiterals = 2,
+    KeepLiterals = 1 << 2,
     AsConstOrKeepLiterals = AsConst | KeepLiterals,
     NotKeepLiterals = ~KeepLiterals,
+    NoTypeReferences = 1 << 3,
+    AddUndefined = 1 << 4,
 }
 
 const relatedSuggestionByDeclarationKind = {

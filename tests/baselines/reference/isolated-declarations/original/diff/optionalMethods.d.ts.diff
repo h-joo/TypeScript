@@ -1,0 +1,53 @@
+// [[Reason: Implicit undefined in parameter can only be detected by TSC.]] ////
+
+//// [tests/cases/conformance/types/namedTypes/optionalMethods.ts] ////
+
+===================================================================
+--- TSC	declarations
++++ DTE	declarations
+@@ -8,14 +8,14 @@
+     g?(): number;
+ }
+ declare function test1(x: Foo): invalid;
+ declare class Bar {
+-    d?: invalid;
++    d?: number;
+     e: number;
+     a: number;
+     b?: number;
+     c?: number | undefined;
+-    constructor(d?: invalid, e?: number);
++    constructor(d?: number, e?: number);
+     f(): invalid;
+     g?(): number;
+     h?(): invalid;
+ }
+@@ -31,15 +31,14 @@
+ 
+ /// [Errors] ////
+ 
+ optionalMethods.ts(8,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+-optionalMethods.ts(22,17): error TS9025: Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.
+ optionalMethods.ts(23,5): error TS9008: Method must have an explicit return type annotation with --isolatedDeclarations.
+ optionalMethods.ts(27,5): error TS9008: Method must have an explicit return type annotation with --isolatedDeclarations.
+ optionalMethods.ts(32,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
+ 
+ 
+-==== optionalMethods.ts (5 errors) ====
++==== optionalMethods.ts (4 errors) ====
+     interface Foo {
+         a: number;
+         b?: number;
+         f(): number;
+@@ -63,11 +62,8 @@
+         a: number;
+         b?: number;
+         c? = 2;
+         constructor(public d?: number, public e = 10) {}
+-                    ~~~~~~~~~~~~~~~~~
+-!!! error TS9025: Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.
+-!!! related TS9028 optionalMethods.ts:22:17: Add a type annotation to the parameter d.
+         f() {
+         ~
+ !!! error TS9008: Method must have an explicit return type annotation with --isolatedDeclarations.
+ !!! related TS9034 optionalMethods.ts:23:5: Add a return type to the method

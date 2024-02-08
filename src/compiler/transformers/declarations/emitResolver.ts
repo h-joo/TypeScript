@@ -469,8 +469,34 @@ export function createEmitDeclarationResolver(file: SourceFile, options: Compile
         setNodeFlags(node, node.flags | NodeFlags.ThisNodeHasError);
         return node;
     }
+
+    function requiresAddingImplicitUndefined(): boolean {
+        return false;
+    }
+
+    function isOptionalParameter(parameter: ParameterDeclaration) {
+        const signature = parameter.parent;
+        const paramIndex = signature.parameters.indexOf(parameter);
+        Debug.assert(paramIndex !== -1);
+        if (parameter.questionToken) return true;
+        if (parameter.dotDotDotToken) return !!parameter.initializer;
+
+        for (let i = paramIndex; i < signature.parameters.length; i++) {
+            const p = signature.parameters[i];
+            if (!p.questionToken && !p.initializer && !p.dotDotDotToken) {
+                return false;
+            }
+        }
+        return true;
+    }
     return {
         ...notImplementedResolver,
+        isUndefinedIdentifier(identifier) {
+            // If we can't find a visible undefined symbol in the scope, it means undefined is referring to the global undefined
+            return identifier.escapedText === "undefined" && resolveName(identifier, identifier.escapedText, SymbolFlags.Value) === undefined
+        },
+        isOptionalParameter,
+        requiresAddingImplicitUndefined,
         createTypeOfDeclaration() {
             return makeInvalidType();
         },
@@ -593,21 +619,6 @@ export function createEmitDeclarationResolver(file: SourceFile, options: Compile
                     (signaturesOfSymbol.length === 1 && signaturesOfSymbol[0] !== node);
             }
             return false;
-        },
-        isOptionalParameter(parameter) {
-            const signature = parameter.parent;
-            const paramIndex = signature.parameters.indexOf(parameter);
-            Debug.assert(paramIndex !== -1);
-            if (parameter.questionToken) return true;
-            if (parameter.dotDotDotToken) return !!parameter.initializer;
-
-            for (let i = paramIndex; i < signature.parameters.length; i++) {
-                const p = signature.parameters[i];
-                if (!p.questionToken && !p.initializer && !p.dotDotDotToken) {
-                    return false;
-                }
-            }
-            return true;
         },
         isEntityNameVisible,
         getTypeReferenceDirectivesForEntityName() {

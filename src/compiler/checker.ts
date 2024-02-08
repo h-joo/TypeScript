@@ -47408,8 +47408,16 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         return false;
     }
 
+    function declaredParameterTypeContainsUndefined(parameter: ParameterDeclaration) {
+        if(!parameter.type) return false;
+        const type = getTypeFromTypeNode(parameter.type);
+        return type === undefinedType || !!(type.flags & TypeFlags.Union) && !!((type as UnionType).types[0].flags & TypeFlags.Undefined);
+    }
+    function requiresAddingImplicitUndefined(parameter: ParameterDeclaration) {
+        return (isRequiredInitializedParameter(parameter) || isOptionalUninitializedParameterProperty(parameter)) && !declaredParameterTypeContainsUndefined(parameter);
+    }
     function isRequiredInitializedParameter(parameter: ParameterDeclaration | JSDocParameterTag): boolean {
-        return !!strictNullChecks &&
+        return strictNullChecks &&
             !isOptionalParameter(parameter) &&
             !isJSDocParameterTag(parameter) &&
             !!parameter.initializer &&
@@ -47813,6 +47821,9 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             getReferencedImportDeclaration,
             getReferencedDeclarationWithCollidingName,
             isDeclarationWithCollidingName,
+            isUndefinedIdentifier(node: Identifier) {
+                return isNullOrUndefined(node);
+            },
             isValueAliasDeclaration: nodeIn => {
                 const node = getParseTreeNode(nodeIn);
                 // Synthesized nodes are always treated like values.
@@ -47831,8 +47842,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             isTopLevelValueImportEqualsWithEntityName,
             isDeclarationVisible,
             isImplementationOfOverload,
-            isRequiredInitializedParameter,
-            isOptionalUninitializedParameterProperty,
+            requiresAddingImplicitUndefined,
             isExpandoFunction,
             getPropertiesOfContainerFunction,
             createTypeOfDeclaration,
