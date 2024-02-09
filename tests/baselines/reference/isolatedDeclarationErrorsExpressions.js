@@ -17,10 +17,10 @@ export const stringConstBad = "s" + "s";
 
 // These are just strings
 export const templateConstOk1 = `s`;
-export const templateConstOk2 = `s${1n}`;
-export const templateConstOk3 = `s${1} - ${"S"}`;
-export const templateConstOk4 = `s${1} - ${"S"} - ${false}`;
-export const templateConstOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
+export const templateConstNotOk2 = `s${1n}`;
+export const templateConstNotOk3 = `s${1} - ${"S"}`;
+export const templateConstNotOk4 = `s${1} - ${"S"} - ${false}`;
+export const templateConstNotOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
 
 export let numberLet = 1;
 export let numberLetBad1 = 1 + 1;
@@ -91,9 +91,9 @@ export class Exported {
     readonly stringConstBad = "s" + "s";
 
     readonly templateConstOk1 = `s`;
-    readonly templateConstOk2 = `s${1} - ${"S"}`;
-    readonly templateConstOk3 = `s${1} - ${"S"} - ${false}`;
-    readonly templateConstOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
+    readonly templateConstNotOk2 = `s${1} - ${"S"}`;
+    readonly templateConstNotOk3 = `s${1} - ${"S"} - ${false}`;
+    readonly templateConstNotOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
 
     numberLetAsConst = 1 as const;
 
@@ -108,23 +108,23 @@ export class Exported {
 
 }
 
-export function numberParam(p = 1): void { };
-export function numberParamBad1(p = 1 + 1): void { };
-export function numberParamBad2(p = Math.random()): void { };
-export function numberParamBad3(p = numberParam): void { };
+export function numberParam(p = 1): void { }
+export function numberParamBad1(p = 1 + 1): void { }
+export function numberParamBad2(p = Math.random()): void { }
+export function numberParamBad3(p = numberParam): void { }
 
-export function bigIntParam(p = 1n): void { };
-export function bigIntParamBad1(p = 1n + 1n): void { };
-export function bigIntParamBad2(p = time()): void { };
-export function bigIntParamBad3(p = bigIntParam): void { };
+export function bigIntParam(p = 1n): void { }
+export function bigIntParamBad1(p = 1n + 1n): void { }
+export function bigIntParamBad2(p = time()): void { }
+export function bigIntParamBad3(p = bigIntParam): void { }
 
-export function stringParam(p = "s"): void { };
-export function stringParamBad(p = "s" + "s"): void { };
+export function stringParam(p = "s"): void { }
+export function stringParamBad(p = "s" + "s"): void { }
 
-export function templateParamOk1(p = `s`): void { };
-export function templateParamOk2(p = `s${1} - ${"S"}`): void { };
-export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`): void { };
-export function templateParamOk4(p = `s${1 + 1} - ${"S"} - ${!false}`): void { };
+export function templateParamOk1(p = `s`): void { }
+export function templateParamOk2(p = `s${1} - ${"S"}`): void { }
+export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`): void { }
+export function templateParamOk4(p = `s${1 + 1} - ${"S"} - ${!false}`): void { }
 
 
 export const { a } = { a: 1 };
@@ -151,10 +151,10 @@ export const stringConst = "s";
 export const stringConstBad = "s" + "s";
 // These are just strings
 export const templateConstOk1 = `s`;
-export const templateConstOk2 = `s${1n}`;
-export const templateConstOk3 = `s${1} - ${"S"}`;
-export const templateConstOk4 = `s${1} - ${"S"} - ${false}`;
-export const templateConstOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
+export const templateConstNotOk2 = `s${1n}`;
+export const templateConstNotOk3 = `s${1} - ${"S"}`;
+export const templateConstNotOk4 = `s${1} - ${"S"} - ${false}`;
+export const templateConstNotOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
 export let numberLet = 1;
 export let numberLetBad1 = 1 + 1;
 export let numberLetBad2 = Math.random();
@@ -206,9 +206,9 @@ export class Exported {
     stringConst = "s";
     stringConstBad = "s" + "s";
     templateConstOk1 = `s`;
-    templateConstOk2 = `s${1} - ${"S"}`;
-    templateConstOk3 = `s${1} - ${"S"} - ${false}`;
-    templateConstOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
+    templateConstNotOk2 = `s${1} - ${"S"}`;
+    templateConstNotOk3 = `s${1} - ${"S"} - ${false}`;
+    templateConstNotOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
     numberLetAsConst = 1;
     bigIntLetAsConst = 1n;
     stringLetAsConst = "s";
@@ -218,33 +218,19 @@ export class Exported {
     templateLetOk4AsConst = `s${1 + 1} - ${"S"} - ${!false}`;
 }
 export function numberParam(p = 1) { }
-;
 export function numberParamBad1(p = 1 + 1) { }
-;
 export function numberParamBad2(p = Math.random()) { }
-;
 export function numberParamBad3(p = numberParam) { }
-;
 export function bigIntParam(p = 1n) { }
-;
 export function bigIntParamBad1(p = 1n + 1n) { }
-;
 export function bigIntParamBad2(p = time()) { }
-;
 export function bigIntParamBad3(p = bigIntParam) { }
-;
 export function stringParam(p = "s") { }
-;
 export function stringParamBad(p = "s" + "s") { }
-;
 export function templateParamOk1(p = `s`) { }
-;
 export function templateParamOk2(p = `s${1} - ${"S"}`) { }
-;
 export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`) { }
-;
 export function templateParamOk4(p = `s${1 + 1} - ${"S"} - ${!false}`) { }
-;
 export const { a } = { a: 1 };
 export const [, , b = 1] = [0, 1, 2];
 export function foo([, , b] = [0, 1, 2]) {

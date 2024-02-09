@@ -10,7 +10,6 @@ import {
     ArrayLiteralExpression,
     ArrowFunction,
     AsExpression,
-    assertType,
     BigIntLiteral,
     BindingElement,
     BindingName,
@@ -20,6 +19,7 @@ import {
     canHaveModifiers,
     canProduceDiagnostics,
     ClassDeclaration,
+    clonePrimitiveLiteralValue,
     compact,
     ComputedPropertyName,
     concatenate,
@@ -89,8 +89,10 @@ import {
     getThisParameter,
     hasDynamicName,
     hasEffectiveModifier,
+    hasEffectiveReadonlyModifier,
     hasExtension,
     HasInferredType,
+    hasInferredType,
     hasJSDocNodes,
     HasModifiers,
     hasSyntacticModifier,
@@ -187,8 +189,6 @@ import {
     LateBoundDeclaration,
     LateVisibilityPaintedStatement,
     length,
-    LiteralExpression,
-    LiteralTypeNode,
     map,
     mapDefined,
     MethodDeclaration,
@@ -220,6 +220,7 @@ import {
     pathContainsNodeModules,
     pathIsRelative,
     PrefixUnaryExpression,
+    PrimitiveLiteral,
     PropertyAssignment,
     PropertyDeclaration,
     PropertyName,
@@ -2182,39 +2183,20 @@ export function transformDeclarations(context: TransformationContext) {
                         return visitType(type);
                     }
                 case SyntaxKind.PrefixUnaryExpression:
-                    const prefixOp = node as PrefixUnaryExpression;
-                    if (prefixOp.operator === SyntaxKind.MinusToken || prefixOp.operator === SyntaxKind.PlusToken) {
-                        if (InitializeTransformNarrowBehavior.AsConstOrKeepLiterals & inferenceFlags) {
-                            switch (prefixOp.operand.kind) {
-                                case SyntaxKind.NumericLiteral:
-                                    switch (prefixOp.operator) {
-                                        case SyntaxKind.MinusToken:
-                                            return factory.createLiteralTypeNode(prefixOp);
-                                        case SyntaxKind.PlusToken:
-                                            return factory.createLiteralTypeNode(prefixOp.operand as LiteralExpression);
-                                    }
-                                    break;
-                                case SyntaxKind.BigIntLiteral:
-                                    if (prefixOp.operator === SyntaxKind.MinusToken) {
-                                        return factory.createLiteralTypeNode(prefixOp);
-                                    }
-                            }
+                    const unaryExpression = node as PrefixUnaryExpression;
+                    if(isPrimitiveLiteralValue(unaryExpression)) {
+                        if(unaryExpression.operand.kind === SyntaxKind.BigIntLiteral) {
+                            return literal(unaryExpression, SyntaxKind.BigIntKeyword, inferenceFlags);
                         }
-
-                        if (prefixOp.operator === SyntaxKind.PlusToken) {
-                            return factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
-                        }
-                        else if (prefixOp.operator === SyntaxKind.MinusToken) {
-                            return prefixOp.operand.kind === SyntaxKind.BigIntLiteral ?
-                                factory.createKeywordTypeNode(SyntaxKind.BigIntKeyword) :
-                                factory.createKeywordTypeNode(SyntaxKind.NumberKeyword);
+                        if(unaryExpression.operand.kind === SyntaxKind.NumericLiteral) {
+                            return literal(unaryExpression, SyntaxKind.NumberKeyword, inferenceFlags);
                         }
                     }
                     break;
                 case SyntaxKind.NumericLiteral:
                     return literal(node as NumericLiteral, SyntaxKind.NumberKeyword, inferenceFlags);
                 case SyntaxKind.TemplateExpression:
-                    if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConst)) {
+                    if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConstOrKeepLiterals)) {
                         return factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
                     }
                     break;
@@ -2303,30 +2285,6 @@ export function transformDeclarations(context: TransformationContext) {
                 getSymbolAccessibilityDiagnostic = oldDiag;
             }
             return typeNode ?? makeInvalidType();
-        }
-        function hasInferredType(node: Node): node is HasInferredType {
-            Debug.type<HasInferredType>(node);
-            switch (node.kind) {
-                case SyntaxKind.FunctionDeclaration:
-                case SyntaxKind.MethodDeclaration:
-                case SyntaxKind.GetAccessor:
-                case SyntaxKind.SetAccessor:
-                case SyntaxKind.BindingElement:
-                case SyntaxKind.ConstructSignature:
-                case SyntaxKind.VariableDeclaration:
-                case SyntaxKind.MethodSignature:
-                case SyntaxKind.CallSignature:
-                case SyntaxKind.ArrowFunction:
-                case SyntaxKind.FunctionExpression:
-                case SyntaxKind.Parameter:
-                case SyntaxKind.PropertyDeclaration:
-                case SyntaxKind.PropertySignature:
-                case SyntaxKind.PropertyAssignment:
-                    return true;
-                default:
-                    assertType<never>(node);
-                    return false;
-            }
         }
         function transformFunctionExpressionOrArrowFunction(fnNode: FunctionExpression | ArrowFunction) {
             const oldEnclosingDeclaration = enclosingDeclaration;
@@ -2441,21 +2399,22 @@ export function transformDeclarations(context: TransformationContext) {
                         }
                     }
                 }
-
+                let newProp;
                 switch (prop.kind) {
                     case SyntaxKind.MethodDeclaration:
-                        properties.push(transformMethodDeclarationToSignature(prop, name, inferenceFlags));
+                        newProp = transformMethodDeclarationToSignature(prop, name, inferenceFlags);
                         break;
                     case SyntaxKind.PropertyAssignment:
-                        properties.push(transformPropertyAssignment(prop, name, inferenceFlags));
+                        newProp = transformPropertyAssignment(prop, name, inferenceFlags);
                         break;
                     case SyntaxKind.SetAccessor:
                     case SyntaxKind.GetAccessor:
-                        const newProp = transformAccessor(prop, name);
-                        if(newProp) {
-                            properties.push(newProp); 
-                        }
+                        newProp = transformAccessor(prop, name);
                         break;
+                }
+                if(newProp) {
+                    setCommentRange(newProp, prop);
+                    properties.push(newProp); 
                 }
             }
 
@@ -2553,8 +2512,6 @@ export function transformDeclarations(context: TransformationContext) {
                     /*questionToken*/ undefined,
                     propertyType,
                 );
-
-                setCommentRange(propertySignature, accessor);
                 return propertySignature;
             }
         }
@@ -2566,9 +2523,9 @@ export function transformDeclarations(context: TransformationContext) {
                 return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
             }
         }
-        function literal(node: LiteralTypeNode["literal"], baseType: string | KeywordTypeSyntaxKind, narrowBehavior: InitializeTransformNarrowBehavior) {
+        function literal(node: PrimitiveLiteral, baseType: string | KeywordTypeSyntaxKind, narrowBehavior: InitializeTransformNarrowBehavior) {
             if (narrowBehavior & InitializeTransformNarrowBehavior.AsConstOrKeepLiterals) {
-                return factory.createLiteralTypeNode(node);
+                return factory.createLiteralTypeNode(clonePrimitiveLiteralValue(node));
             }
             else {
                 return typeof baseType === "number" ? factory.createKeywordTypeNode(baseType) : factory.createTypeReferenceNode(baseType);
@@ -2680,8 +2637,9 @@ export function transformDeclarations(context: TransformationContext) {
             }
             else if (isPropertyDeclaration(node) || isPropertySignature(node)) {
                 if (node.initializer) {
-                    const optionalFlag = isOptionalDeclaration(node) ? InitializeTransformNarrowBehavior.NoTypeReferences | InitializeTransformNarrowBehavior.AddUndefined: InitializeTransformNarrowBehavior.None;
-                    return transformExpressionToType(node.initializer, optionalFlag);
+                    const optionalFlags = isOptionalDeclaration(node) ? InitializeTransformNarrowBehavior.NoTypeReferences | InitializeTransformNarrowBehavior.AddUndefined: InitializeTransformNarrowBehavior.None;
+                    const readonlyFlags = hasEffectiveReadonlyModifier(node)? InitializeTransformNarrowBehavior.KeepLiterals : InitializeTransformNarrowBehavior.None;
+                    return transformExpressionToType(node.initializer, optionalFlags | readonlyFlags);
                 }
                 else if (isInterfaceDeclaration(node.parent) || isTypeLiteralNode(node.parent)) {
                     return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);

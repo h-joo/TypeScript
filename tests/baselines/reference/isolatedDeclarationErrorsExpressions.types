@@ -59,26 +59,26 @@ export const templateConstOk1 = `s`;
 >templateConstOk1 : "s"
 >`s` : "s"
 
-export const templateConstOk2 = `s${1n}`;
->templateConstOk2 : string
+export const templateConstNotOk2 = `s${1n}`;
+>templateConstNotOk2 : string
 >`s${1n}` : string
 >1n : 1n
 
-export const templateConstOk3 = `s${1} - ${"S"}`;
->templateConstOk3 : "s1 - S"
+export const templateConstNotOk3 = `s${1} - ${"S"}`;
+>templateConstNotOk3 : "s1 - S"
 >`s${1} - ${"S"}` : "s1 - S"
 >1 : 1
 >"S" : "S"
 
-export const templateConstOk4 = `s${1} - ${"S"} - ${false}`;
->templateConstOk4 : string
+export const templateConstNotOk4 = `s${1} - ${"S"} - ${false}`;
+>templateConstNotOk4 : string
 >`s${1} - ${"S"} - ${false}` : string
 >1 : 1
 >"S" : "S"
 >false : false
 
-export const templateConstOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
->templateConstOk5 : string
+export const templateConstNotOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
+>templateConstNotOk5 : string
 >`s${1 + 1} - ${"S"} - ${!false}` : string
 >1 + 1 : number
 >1 : 1
@@ -372,21 +372,21 @@ export class Exported {
 >templateConstOk1 : "s"
 >`s` : "s"
 
-    readonly templateConstOk2 = `s${1} - ${"S"}`;
->templateConstOk2 : "s1 - S"
+    readonly templateConstNotOk2 = `s${1} - ${"S"}`;
+>templateConstNotOk2 : "s1 - S"
 >`s${1} - ${"S"}` : "s1 - S"
 >1 : 1
 >"S" : "S"
 
-    readonly templateConstOk3 = `s${1} - ${"S"} - ${false}`;
->templateConstOk3 : string
+    readonly templateConstNotOk3 = `s${1} - ${"S"} - ${false}`;
+>templateConstNotOk3 : string
 >`s${1} - ${"S"} - ${false}` : string
 >1 : 1
 >"S" : "S"
 >false : false
 
-    readonly templateConstOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
->templateConstOk4 : string
+    readonly templateConstNotOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
+>templateConstNotOk4 : string
 >`s${1 + 1} - ${"S"} - ${!false}` : string
 >1 + 1 : number
 >1 : 1
@@ -443,19 +443,19 @@ export class Exported {
 
 }
 
-export function numberParam(p = 1): void { };
+export function numberParam(p = 1): void { }
 >numberParam : (p?: number) => void
 >p : number
 >1 : 1
 
-export function numberParamBad1(p = 1 + 1): void { };
+export function numberParamBad1(p = 1 + 1): void { }
 >numberParamBad1 : (p?: number) => void
 >p : number
 >1 + 1 : number
 >1 : 1
 >1 : 1
 
-export function numberParamBad2(p = Math.random()): void { };
+export function numberParamBad2(p = Math.random()): void { }
 >numberParamBad2 : (p?: number) => void
 >p : number
 >Math.random() : number
@@ -463,59 +463,59 @@ export function numberParamBad2(p = Math.random()): void { };
 >Math : Math
 >random : () => number
 
-export function numberParamBad3(p = numberParam): void { };
+export function numberParamBad3(p = numberParam): void { }
 >numberParamBad3 : (p?: (p?: number) => void) => void
 >p : (p?: number) => void
 >numberParam : (p?: number) => void
 
-export function bigIntParam(p = 1n): void { };
+export function bigIntParam(p = 1n): void { }
 >bigIntParam : (p?: bigint) => void
 >p : bigint
 >1n : 1n
 
-export function bigIntParamBad1(p = 1n + 1n): void { };
+export function bigIntParamBad1(p = 1n + 1n): void { }
 >bigIntParamBad1 : (p?: bigint) => void
 >p : bigint
 >1n + 1n : bigint
 >1n : 1n
 >1n : 1n
 
-export function bigIntParamBad2(p = time()): void { };
+export function bigIntParamBad2(p = time()): void { }
 >bigIntParamBad2 : (p?: bigint) => void
 >p : bigint
 >time() : bigint
 >time : () => bigint
 
-export function bigIntParamBad3(p = bigIntParam): void { };
+export function bigIntParamBad3(p = bigIntParam): void { }
 >bigIntParamBad3 : (p?: (p?: bigint) => void) => void
 >p : (p?: bigint) => void
 >bigIntParam : (p?: bigint) => void
 
-export function stringParam(p = "s"): void { };
+export function stringParam(p = "s"): void { }
 >stringParam : (p?: string) => void
 >p : string
 >"s" : "s"
 
-export function stringParamBad(p = "s" + "s"): void { };
+export function stringParamBad(p = "s" + "s"): void { }
 >stringParamBad : (p?: string) => void
 >p : string
 >"s" + "s" : string
 >"s" : "s"
 >"s" : "s"
 
-export function templateParamOk1(p = `s`): void { };
+export function templateParamOk1(p = `s`): void { }
 >templateParamOk1 : (p?: string) => void
 >p : string
 >`s` : "s"
 
-export function templateParamOk2(p = `s${1} - ${"S"}`): void { };
+export function templateParamOk2(p = `s${1} - ${"S"}`): void { }
 >templateParamOk2 : (p?: string) => void
 >p : string
 >`s${1} - ${"S"}` : "s1 - S"
 >1 : 1
 >"S" : "S"
 
-export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`): void { };
+export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`): void { }
 >templateParamOk3 : (p?: string) => void
 >p : string
 >`s${1} - ${"S"} - ${false}` : string
@@ -523,7 +523,7 @@ export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`): void { };
 >"S" : "S"
 >false : false
 
-export function templateParamOk4(p = `s${1 + 1} - ${"S"} - ${!false}`): void { };
+export function templateParamOk4(p = `s${1 + 1} - ${"S"} - ${!false}`): void { }
 >templateParamOk4 : (p?: string) => void
 >p : string
 >`s${1 + 1} - ${"S"} - ${!false}` : string

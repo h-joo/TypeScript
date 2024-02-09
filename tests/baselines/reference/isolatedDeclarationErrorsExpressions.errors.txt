@@ -5,6 +5,10 @@ isolatedDeclarationErrorsExpressions.ts(8,32): error TS9010: Variable must have 
 isolatedDeclarationErrorsExpressions.ts(9,32): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(10,32): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(13,31): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+isolatedDeclarationErrorsExpressions.ts(17,36): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+isolatedDeclarationErrorsExpressions.ts(18,36): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+isolatedDeclarationErrorsExpressions.ts(19,36): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+isolatedDeclarationErrorsExpressions.ts(20,36): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(23,28): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(24,28): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(25,28): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
@@ -31,6 +35,9 @@ isolatedDeclarationErrorsExpressions.ts(83,32): error TS9012: Property must have
 isolatedDeclarationErrorsExpressions.ts(84,32): error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(85,32): error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(88,31): error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
+isolatedDeclarationErrorsExpressions.ts(91,36): error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
+isolatedDeclarationErrorsExpressions.ts(92,36): error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
+isolatedDeclarationErrorsExpressions.ts(93,36): error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(102,29): error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(103,29): error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
 isolatedDeclarationErrorsExpressions.ts(104,29): error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
@@ -45,7 +52,7 @@ isolatedDeclarationErrorsExpressions.ts(127,16): error TS9019: Binding elements 
 isolatedDeclarationErrorsExpressions.ts(128,19): error TS9019: Binding elements can't be exported directly with --isolatedDeclarations.
 
 
-==== isolatedDeclarationErrorsExpressions.ts (45 errors) ====
+==== isolatedDeclarationErrorsExpressions.ts (52 errors) ====
     declare function time(): bigint
     export const numberConst = 1;
     export const numberConstBad1 = 1 + 1;
@@ -83,10 +90,22 @@ isolatedDeclarationErrorsExpressions.ts(128,19): error TS9019: Binding elements 
     
     // These are just strings
     export const templateConstOk1 = `s`;
-    export const templateConstOk2 = `s${1n}`;
-    export const templateConstOk3 = `s${1} - ${"S"}`;
-    export const templateConstOk4 = `s${1} - ${"S"} - ${false}`;
-    export const templateConstOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
+    export const templateConstNotOk2 = `s${1n}`;
+                                       ~~~~~~~~
+!!! error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+!!! related TS9027 isolatedDeclarationErrorsExpressions.ts:17:14: Add a type annotation to the variable templateConstNotOk2.
+    export const templateConstNotOk3 = `s${1} - ${"S"}`;
+                                       ~~~~~~~~~~~~~~~~
+!!! error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+!!! related TS9027 isolatedDeclarationErrorsExpressions.ts:18:14: Add a type annotation to the variable templateConstNotOk3.
+    export const templateConstNotOk4 = `s${1} - ${"S"} - ${false}`;
+                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+!!! related TS9027 isolatedDeclarationErrorsExpressions.ts:19:14: Add a type annotation to the variable templateConstNotOk4.
+    export const templateConstNotOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
+                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+!!! related TS9027 isolatedDeclarationErrorsExpressions.ts:20:14: Add a type annotation to the variable templateConstNotOk5.
     
     export let numberLet = 1;
     export let numberLetBad1 = 1 + 1;
@@ -235,9 +254,18 @@ isolatedDeclarationErrorsExpressions.ts(128,19): error TS9019: Binding elements 
 !!! related TS9029 isolatedDeclarationErrorsExpressions.ts:88:14: Add a type annotation to the property stringConstBad.
     
         readonly templateConstOk1 = `s`;
-        readonly templateConstOk2 = `s${1} - ${"S"}`;
-        readonly templateConstOk3 = `s${1} - ${"S"} - ${false}`;
-        readonly templateConstOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
+        readonly templateConstNotOk2 = `s${1} - ${"S"}`;
+                                       ~~~~~~~~~~~~~~~~
+!!! error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
+!!! related TS9029 isolatedDeclarationErrorsExpressions.ts:91:14: Add a type annotation to the property templateConstNotOk2.
+        readonly templateConstNotOk3 = `s${1} - ${"S"} - ${false}`;
+                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
+!!! related TS9029 isolatedDeclarationErrorsExpressions.ts:92:14: Add a type annotation to the property templateConstNotOk3.
+        readonly templateConstNotOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
+                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS9012: Property must have an explicit type annotation with --isolatedDeclarations.
+!!! related TS9029 isolatedDeclarationErrorsExpressions.ts:93:14: Add a type annotation to the property templateConstNotOk4.
     
         numberLetAsConst = 1 as const;
     
@@ -261,44 +289,44 @@ isolatedDeclarationErrorsExpressions.ts(128,19): error TS9019: Binding elements 
     
     }
     
-    export function numberParam(p = 1): void { };
-    export function numberParamBad1(p = 1 + 1): void { };
+    export function numberParam(p = 1): void { }
+    export function numberParamBad1(p = 1 + 1): void { }
                                         ~~~~~
 !!! error TS9011: Parameter must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9028 isolatedDeclarationErrorsExpressions.ts:109:33: Add a type annotation to the parameter p.
-    export function numberParamBad2(p = Math.random()): void { };
+    export function numberParamBad2(p = Math.random()): void { }
                                         ~~~~~~~~~~~~~
 !!! error TS9011: Parameter must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9028 isolatedDeclarationErrorsExpressions.ts:110:33: Add a type annotation to the parameter p.
-    export function numberParamBad3(p = numberParam): void { };
+    export function numberParamBad3(p = numberParam): void { }
                                         ~~~~~~~~~~~
 !!! error TS9011: Parameter must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9028 isolatedDeclarationErrorsExpressions.ts:111:33: Add a type annotation to the parameter p.
     
-    export function bigIntParam(p = 1n): void { };
-    export function bigIntParamBad1(p = 1n + 1n): void { };
+    export function bigIntParam(p = 1n): void { }
+    export function bigIntParamBad1(p = 1n + 1n): void { }
                                         ~~~~~~~
 !!! error TS9011: Parameter must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9028 isolatedDeclarationErrorsExpressions.ts:114:33: Add a type annotation to the parameter p.
-    export function bigIntParamBad2(p = time()): void { };
+    export function bigIntParamBad2(p = time()): void { }
                                         ~~~~~~
 !!! error TS9011: Parameter must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9028 isolatedDeclarationErrorsExpressions.ts:115:33: Add a type annotation to the parameter p.
-    export function bigIntParamBad3(p = bigIntParam): void { };
+    export function bigIntParamBad3(p = bigIntParam): void { }
                                         ~~~~~~~~~~~
 !!! error TS9011: Parameter must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9028 isolatedDeclarationErrorsExpressions.ts:116:33: Add a type annotation to the parameter p.
     
-    export function stringParam(p = "s"): void { };
-    export function stringParamBad(p = "s" + "s"): void { };
+    export function stringParam(p = "s"): void { }
+    export function stringParamBad(p = "s" + "s"): void { }
                                        ~~~~~~~~~
 !!! error TS9011: Parameter must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9028 isolatedDeclarationErrorsExpressions.ts:119:32: Add a type annotation to the parameter p.
     
-    export function templateParamOk1(p = `s`): void { };
-    export function templateParamOk2(p = `s${1} - ${"S"}`): void { };
-    export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`): void { };
-    export function templateParamOk4(p = `s${1 + 1} - ${"S"} - ${!false}`): void { };
+    export function templateParamOk1(p = `s`): void { }
+    export function templateParamOk2(p = `s${1} - ${"S"}`): void { }
+    export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`): void { }
+    export function templateParamOk4(p = `s${1 + 1} - ${"S"} - ${!false}`): void { }
     
     
     export const { a } = { a: 1 };

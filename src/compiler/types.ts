@@ -1401,6 +1401,16 @@ export type HasInferredType =
     | PropertyDeclaration
     | PropertySignature
     | PropertyAssignment;
+
+/** @internal */
+export type PrimitiveLiteral = 
+    | BooleanLiteral
+    | NumericLiteral
+    | StringLiteral
+    | NoSubstitutionTemplateLiteral
+    | BigIntLiteral
+    | PrefixUnaryExpression;
+
 /**
  * Declarations that can contain other declarations. Corresponds with `ContainerFlags.IsContainer` in binder.ts.
  *

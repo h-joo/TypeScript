@@ -1,7 +1,7 @@
 import {
     __String,
-    BigIntLiteral,
     bindSourceFile,
+    clonePrimitiveLiteralValue,
     CompilerOptions,
     ComputedPropertyName,
     createEntityVisibilityChecker,
@@ -73,12 +73,9 @@ import {
     nodeIsPresent,
     NoSubstitutionTemplateLiteral,
     notImplementedResolver,
-    NumericLiteral,
     objectAllocator,
     ParameterDeclaration,
-    parsePseudoBigInt,
     pathIsRelative,
-    PrefixUnaryExpression,
     PropertyAccessExpression,
     PropertyDeclaration,
     PropertyName,
@@ -88,13 +85,11 @@ import {
     skipParentheses,
     some,
     SourceFile,
-    StringLiteralLike,
     Symbol,
     SymbolAccessibility,
     SymbolFlags,
     SymbolTable,
     SyntaxKind,
-    TemplateExpression,
     VariableDeclaration,
 } from "../../_namespaces/ts";
 
@@ -364,46 +359,6 @@ export function createEmitDeclarationResolver(file: SourceFile, options: Compile
         },
         onNumericLiteral() {},
     });
-    function clonePrimitiveLiteralValue(node: Expression): Expression {
-        switch(node.kind) {
-            case SyntaxKind.NumericLiteral: 
-                return factory.createNumericLiteral((node as NumericLiteral).text);
-            case SyntaxKind.BigIntLiteral: 
-                return factory.createBigIntLiteral({ negative: false, base10Value: parsePseudoBigInt((node as BigIntLiteral).text) });
-            case SyntaxKind.StringLiteral: 
-            case SyntaxKind.NoSubstitutionTemplateLiteral: 
-                return factory.createStringLiteral((node as StringLiteralLike).text);
-            case SyntaxKind.FalseKeyword: 
-                return factory.createFalse();
-            case SyntaxKind.TrueKeyword: 
-                return factory.createTrue();
-            case SyntaxKind.PrefixUnaryExpression:
-                return factory.createPrefixUnaryExpression(
-                    (node as PrefixUnaryExpression).operator,
-                    clonePrimitiveLiteralValue((node as PrefixUnaryExpression).operand),
-                );
-            case SyntaxKind.TemplateExpression: 
-                const templateExpression = node as TemplateExpression
-                const evaluatedValue = evaluate(templateExpression);
-                if (evaluatedValue !== undefined) {
-                    return factory.createStringLiteral(evaluatedValue);
-                }
-                const templateHead = templateExpression.head
-                return factory.createTemplateExpression(
-                    factory.createTemplateHead(templateHead.text, templateHead.rawText, templateHead.templateFlags),
-                    templateExpression.templateSpans.map(t =>
-                        factory.createTemplateSpan(
-                            clonePrimitiveLiteralValue(t.expression),
-                            t.literal.kind === SyntaxKind.TemplateMiddle ?
-                                factory.createTemplateMiddle(t.literal.text, t.literal.rawText, t.literal.templateFlags) :
-                                factory.createTemplateTail(t.literal.text, t.literal.rawText, t.literal.templateFlags),
-                        )
-                    ),
-                );
-            default:
-                Debug.assert(false, `Unable to clone unknown literal type. Kind: ${node.kind}`);
-        }
-    }
 
     function isLiteralConstDeclaration(node: VariableDeclaration | PropertyDeclaration | PropertySignature | ParameterDeclaration): boolean {
         if (isDeclarationReadonly(node) || (isVariableDeclaration(node) && isVarConst(node)) || isEnumMember(node)) {
@@ -564,10 +519,8 @@ export function createEmitDeclarationResolver(file: SourceFile, options: Compile
             }
         },
         createLiteralConstValue(node) {
-            if (hasProperty(node, "initializer") && node.initializer) {
-                return clonePrimitiveLiteralValue(node.initializer);
-            }
-            Debug.fail();
+            Debug.assert(node.initializer && isPrimitiveLiteralValue(node.initializer));
+            return clonePrimitiveLiteralValue(node.initializer);
         },
         isLateBound(node): node is LateBoundDeclaration {
             const name = getNameOfDeclaration(node);

@@ -44,17 +44,17 @@ export const stringConstBad = "s" + "s";
 export const templateConstOk1 = `s`;
 >templateConstOk1 : Symbol(templateConstOk1, Decl(isolatedDeclarationErrorsExpressions.ts, 15, 12))
 
-export const templateConstOk2 = `s${1n}`;
->templateConstOk2 : Symbol(templateConstOk2, Decl(isolatedDeclarationErrorsExpressions.ts, 16, 12))
+export const templateConstNotOk2 = `s${1n}`;
+>templateConstNotOk2 : Symbol(templateConstNotOk2, Decl(isolatedDeclarationErrorsExpressions.ts, 16, 12))
 
-export const templateConstOk3 = `s${1} - ${"S"}`;
->templateConstOk3 : Symbol(templateConstOk3, Decl(isolatedDeclarationErrorsExpressions.ts, 17, 12))
+export const templateConstNotOk3 = `s${1} - ${"S"}`;
+>templateConstNotOk3 : Symbol(templateConstNotOk3, Decl(isolatedDeclarationErrorsExpressions.ts, 17, 12))
 
-export const templateConstOk4 = `s${1} - ${"S"} - ${false}`;
->templateConstOk4 : Symbol(templateConstOk4, Decl(isolatedDeclarationErrorsExpressions.ts, 18, 12))
+export const templateConstNotOk4 = `s${1} - ${"S"} - ${false}`;
+>templateConstNotOk4 : Symbol(templateConstNotOk4, Decl(isolatedDeclarationErrorsExpressions.ts, 18, 12))
 
-export const templateConstOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
->templateConstOk5 : Symbol(templateConstOk5, Decl(isolatedDeclarationErrorsExpressions.ts, 19, 12))
+export const templateConstNotOk5 = `s${1 + 1} - ${"S"} - ${!false}`;
+>templateConstNotOk5 : Symbol(templateConstNotOk5, Decl(isolatedDeclarationErrorsExpressions.ts, 19, 12))
 
 export let numberLet = 1;
 >numberLet : Symbol(numberLet, Decl(isolatedDeclarationErrorsExpressions.ts, 21, 10))
@@ -237,17 +237,17 @@ export class Exported {
     readonly templateConstOk1 = `s`;
 >templateConstOk1 : Symbol(Exported.templateConstOk1, Decl(isolatedDeclarationErrorsExpressions.ts, 87, 40))
 
-    readonly templateConstOk2 = `s${1} - ${"S"}`;
->templateConstOk2 : Symbol(Exported.templateConstOk2, Decl(isolatedDeclarationErrorsExpressions.ts, 89, 36))
+    readonly templateConstNotOk2 = `s${1} - ${"S"}`;
+>templateConstNotOk2 : Symbol(Exported.templateConstNotOk2, Decl(isolatedDeclarationErrorsExpressions.ts, 89, 36))
 
-    readonly templateConstOk3 = `s${1} - ${"S"} - ${false}`;
->templateConstOk3 : Symbol(Exported.templateConstOk3, Decl(isolatedDeclarationErrorsExpressions.ts, 90, 49))
+    readonly templateConstNotOk3 = `s${1} - ${"S"} - ${false}`;
+>templateConstNotOk3 : Symbol(Exported.templateConstNotOk3, Decl(isolatedDeclarationErrorsExpressions.ts, 90, 52))
 
-    readonly templateConstOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
->templateConstOk4 : Symbol(Exported.templateConstOk4, Decl(isolatedDeclarationErrorsExpressions.ts, 91, 60))
+    readonly templateConstNotOk4 = `s${1 + 1} - ${"S"} - ${!false}`;
+>templateConstNotOk4 : Symbol(Exported.templateConstNotOk4, Decl(isolatedDeclarationErrorsExpressions.ts, 91, 63))
 
     numberLetAsConst = 1 as const;
->numberLetAsConst : Symbol(Exported.numberLetAsConst, Decl(isolatedDeclarationErrorsExpressions.ts, 92, 65))
+>numberLetAsConst : Symbol(Exported.numberLetAsConst, Decl(isolatedDeclarationErrorsExpressions.ts, 92, 68))
 >const : Symbol(const)
 
     bigIntLetAsConst = 1n as const;
@@ -276,66 +276,66 @@ export class Exported {
 
 }
 
-export function numberParam(p = 1): void { };
+export function numberParam(p = 1): void { }
 >numberParam : Symbol(numberParam, Decl(isolatedDeclarationErrorsExpressions.ts, 105, 1))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 107, 28))
 
-export function numberParamBad1(p = 1 + 1): void { };
->numberParamBad1 : Symbol(numberParamBad1, Decl(isolatedDeclarationErrorsExpressions.ts, 107, 45))
+export function numberParamBad1(p = 1 + 1): void { }
+>numberParamBad1 : Symbol(numberParamBad1, Decl(isolatedDeclarationErrorsExpressions.ts, 107, 44))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 108, 32))
 
-export function numberParamBad2(p = Math.random()): void { };
->numberParamBad2 : Symbol(numberParamBad2, Decl(isolatedDeclarationErrorsExpressions.ts, 108, 53))
+export function numberParamBad2(p = Math.random()): void { }
+>numberParamBad2 : Symbol(numberParamBad2, Decl(isolatedDeclarationErrorsExpressions.ts, 108, 52))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 109, 32))
 >Math.random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
 >Math : Symbol(Math, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --))
 >random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
 
-export function numberParamBad3(p = numberParam): void { };
->numberParamBad3 : Symbol(numberParamBad3, Decl(isolatedDeclarationErrorsExpressions.ts, 109, 61))
+export function numberParamBad3(p = numberParam): void { }
+>numberParamBad3 : Symbol(numberParamBad3, Decl(isolatedDeclarationErrorsExpressions.ts, 109, 60))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 110, 32))
 >numberParam : Symbol(numberParam, Decl(isolatedDeclarationErrorsExpressions.ts, 105, 1))
 
-export function bigIntParam(p = 1n): void { };
->bigIntParam : Symbol(bigIntParam, Decl(isolatedDeclarationErrorsExpressions.ts, 110, 59))
+export function bigIntParam(p = 1n): void { }
+>bigIntParam : Symbol(bigIntParam, Decl(isolatedDeclarationErrorsExpressions.ts, 110, 58))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 112, 28))
 
-export function bigIntParamBad1(p = 1n + 1n): void { };
->bigIntParamBad1 : Symbol(bigIntParamBad1, Decl(isolatedDeclarationErrorsExpressions.ts, 112, 46))
+export function bigIntParamBad1(p = 1n + 1n): void { }
+>bigIntParamBad1 : Symbol(bigIntParamBad1, Decl(isolatedDeclarationErrorsExpressions.ts, 112, 45))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 113, 32))
 
-export function bigIntParamBad2(p = time()): void { };
->bigIntParamBad2 : Symbol(bigIntParamBad2, Decl(isolatedDeclarationErrorsExpressions.ts, 113, 55))
+export function bigIntParamBad2(p = time()): void { }
+>bigIntParamBad2 : Symbol(bigIntParamBad2, Decl(isolatedDeclarationErrorsExpressions.ts, 113, 54))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 114, 32))
 >time : Symbol(time, Decl(isolatedDeclarationErrorsExpressions.ts, 0, 0))
 
-export function bigIntParamBad3(p = bigIntParam): void { };
->bigIntParamBad3 : Symbol(bigIntParamBad3, Decl(isolatedDeclarationErrorsExpressions.ts, 114, 54))
+export function bigIntParamBad3(p = bigIntParam): void { }
+>bigIntParamBad3 : Symbol(bigIntParamBad3, Decl(isolatedDeclarationErrorsExpressions.ts, 114, 53))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 115, 32))
->bigIntParam : Symbol(bigIntParam, Decl(isolatedDeclarationErrorsExpressions.ts, 110, 59))
+>bigIntParam : Symbol(bigIntParam, Decl(isolatedDeclarationErrorsExpressions.ts, 110, 58))
 
-export function stringParam(p = "s"): void { };
->stringParam : Symbol(stringParam, Decl(isolatedDeclarationErrorsExpressions.ts, 115, 59))
+export function stringParam(p = "s"): void { }
+>stringParam : Symbol(stringParam, Decl(isolatedDeclarationErrorsExpressions.ts, 115, 58))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 117, 28))
 
-export function stringParamBad(p = "s" + "s"): void { };
->stringParamBad : Symbol(stringParamBad, Decl(isolatedDeclarationErrorsExpressions.ts, 117, 47))
+export function stringParamBad(p = "s" + "s"): void { }
+>stringParamBad : Symbol(stringParamBad, Decl(isolatedDeclarationErrorsExpressions.ts, 117, 46))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 118, 31))
 
-export function templateParamOk1(p = `s`): void { };
->templateParamOk1 : Symbol(templateParamOk1, Decl(isolatedDeclarationErrorsExpressions.ts, 118, 56))
+export function templateParamOk1(p = `s`): void { }
+>templateParamOk1 : Symbol(templateParamOk1, Decl(isolatedDeclarationErrorsExpressions.ts, 118, 55))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 120, 33))
 
-export function templateParamOk2(p = `s${1} - ${"S"}`): void { };
->templateParamOk2 : Symbol(templateParamOk2, Decl(isolatedDeclarationErrorsExpressions.ts, 120, 52))
+export function templateParamOk2(p = `s${1} - ${"S"}`): void { }
+>templateParamOk2 : Symbol(templateParamOk2, Decl(isolatedDeclarationErrorsExpressions.ts, 120, 51))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 121, 33))
 
-export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`): void { };
->templateParamOk3 : Symbol(templateParamOk3, Decl(isolatedDeclarationErrorsExpressions.ts, 121, 65))
+export function templateParamOk3(p = `s${1} - ${"S"} - ${false}`): void { }
+>templateParamOk3 : Symbol(templateParamOk3, Decl(isolatedDeclarationErrorsExpressions.ts, 121, 64))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 122, 33))
 
-export function templateParamOk4(p = `s${1 + 1} - ${"S"} - ${!false}`): void { };
->templateParamOk4 : Symbol(templateParamOk4, Decl(isolatedDeclarationErrorsExpressions.ts, 122, 76))
+export function templateParamOk4(p = `s${1 + 1} - ${"S"} - ${!false}`): void { }
+>templateParamOk4 : Symbol(templateParamOk4, Decl(isolatedDeclarationErrorsExpressions.ts, 122, 75))
 >p : Symbol(p, Decl(isolatedDeclarationErrorsExpressions.ts, 123, 33))
 
 
