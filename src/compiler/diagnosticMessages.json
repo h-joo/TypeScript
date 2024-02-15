@@ -7227,8 +7227,11 @@
     "Annotate types of properties expando function in a namespace": {
       "category": "Message",
       "code": 90071
-  },
-
+    },
+    "Add triple slash directives for import resolution": {
+      "category": "Message",
+      "code": 90072
+    },
     "Convert function to an ES2015 class": {
         "category": "Message",
         "code": 95001
