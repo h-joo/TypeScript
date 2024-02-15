@@ -733,23 +733,18 @@ export class FixedIsolatedDeclarationTest extends IsolatedDeclarationTest {
         fixerOptions.isolatedDeclarations = true;
         const fixResults = fixTestFiles(env.fileSystem, env.programFileNames, fixerOptions);
 
-        const hasReferenceDirectiveErrors = fixResults.success && fixResults.unfixedDiagnostics.some(d => FixedIsolatedDeclarationTest.referenceDirectiveErrors.has(d.code));
         for (const file of env.allFiles) {
             const content = env.fileSystem.readFileSync(file.unitName, "utf-8");
             file.content = content;
         }
 
-        if (!fixResults.success || hasReferenceDirectiveErrors) {
+        if (!fixResults.success) {
             return undefined;
         }
         env.fileSystem.makeReadonly();
         env.fileSystem = env.fileSystem.shadow();
         return env;
     }
-    private static referenceDirectiveErrors = new Set([
-        ts.Diagnostics.Declaration_emit_for_this_expression_requires_adding_a_type_reference_directive_to_0_with_isolatedDeclarations.code,
-        ts.Diagnostics.Declaration_emit_for_this_expression_requires_adding_a_path_reference_directive_to_0_with_isolatedDeclarations.code,
-    ]);
 
     protected override get baselinePath() {
         return "isolated-declarations/auto-fixed";
