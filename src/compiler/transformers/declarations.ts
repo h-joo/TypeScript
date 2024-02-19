@@ -339,7 +339,7 @@ export function transformDeclarations(context: TransformationContext) {
     const resolver = context.getEmitResolver();
     const options = context.getCompilerOptions();
     const { noResolve, stripInternal, isolatedDeclarations, isolatedDeclarationsNoFallback } = options;
-    const transformInitializerToTypeNode = initializerToTypeTransformer();
+    const strictNullChecks = getStrictOptionValue(options, "strictNullChecks");
     return transformRoot;
 
     function recordTypeReferenceDirectivesIfNecessary(typeReferenceDirectives: readonly [specifier: string, mode: ResolutionMode][] | undefined, isPresentInSource: boolean, requestingNode = referenceRequestingNode): void {
@@ -671,7 +671,7 @@ export function transformDeclarations(context: TransformationContext) {
                 if (exportedModulesFromDeclarationEmit) {
                     const importReference = exportedModulesFromDeclarationEmit?.get(file.symbol);
                     // Already have an import declaration resolving to this file
-                    if (importReference && importReference.isPresentInSource) {
+                    if (importReference) {
                         return;
                     }
                 }
@@ -2040,639 +2040,635 @@ export function transformDeclarations(context: TransformationContext) {
     function makeInvalidType() {
         return factory.createTypeReferenceNode("invalid");
     }
-    function initializerToTypeTransformer() {
-        const strictNullChecks = getStrictOptionValue(options, "strictNullChecks");
-        return transformInitializerToTypeNode;
 
-        function reportIsolatedDeclarationError(node: Node, message: DiagnosticWithLocation) {
-            // Do not report errors on nodes with other errors.
-            if (node.flags & NodeFlags.ThisNodeHasError) return;
-            if (isolatedDeclarations) {
-                context.addDiagnostic(message);
-            }
+    function reportIsolatedDeclarationError(node: Node, message: DiagnosticWithLocation) {
+        // Do not report errors on nodes with other errors.
+        if (node.flags & NodeFlags.ThisNodeHasError) return;
+        if (isolatedDeclarations) {
+            context.addDiagnostic(message);
         }
+    }
 
-        function findNearestDeclaration(node: Node) {
-            const result = findAncestor(node, n => isExportAssignment(n) || (isStatement(n) ? "quit" : isVariableDeclaration(n) || isPropertyDeclaration(n) || isParameter(n)));
-            return result as VariableDeclaration | PropertyDeclaration | ParameterDeclaration | ExportAssignment | undefined;
+    function findNearestDeclaration(node: Node) {
+        const result = findAncestor(node, n => isExportAssignment(n) || (isStatement(n) ? "quit" : isVariableDeclaration(n) || isPropertyDeclaration(n) || isParameter(n)));
+        return result as VariableDeclaration | PropertyDeclaration | ParameterDeclaration | ExportAssignment | undefined;
+    }
+
+    function createAccessorTypeError(getAccessor: GetAccessorDeclaration | undefined, setAccessor: SetAccessorDeclaration | undefined) {
+        const node = (getAccessor ?? setAccessor)!;
+
+        const targetNode = (isSetAccessor(node) ? node.parameters[0] : node) ?? node;
+        const diag = createDiagnosticForNode(targetNode, errorByDeclarationKind[node.kind]);
+
+        if (setAccessor) {
+            addRelatedInfo(diag, createDiagnosticForNode(setAccessor, relatedSuggestionByDeclarationKind[setAccessor.kind]));
         }
-
-        function createAccessorTypeError(getAccessor: GetAccessorDeclaration | undefined, setAccessor: SetAccessorDeclaration | undefined) {
-            const node = (getAccessor ?? setAccessor)!;
-
-            const targetNode = (isSetAccessor(node) ? node.parameters[0] : node) ?? node;
-            const diag = createDiagnosticForNode(targetNode, errorByDeclarationKind[node.kind]);
-
-            if (setAccessor) {
-                addRelatedInfo(diag, createDiagnosticForNode(setAccessor, relatedSuggestionByDeclarationKind[setAccessor.kind]));
-            }
-            if (getAccessor) {
-                addRelatedInfo(diag, createDiagnosticForNode(getAccessor, relatedSuggestionByDeclarationKind[getAccessor.kind]));
-            }
-            return diag;
+        if (getAccessor) {
+            addRelatedInfo(diag, createDiagnosticForNode(getAccessor, relatedSuggestionByDeclarationKind[getAccessor.kind]));
         }
-        function createObjectLiteralError(node: ShorthandPropertyAssignment | SpreadAssignment | ComputedPropertyName) {
-            const diag = createDiagnosticForNode(node, errorByDeclarationKind[node.kind]);
-            const parentDeclaration = findNearestDeclaration(node);
-            if (parentDeclaration) {
-                const targetStr = isExportAssignment(parentDeclaration) ? "" : getTextOfNode(parentDeclaration.name, /*includeTrivia*/ false);
+        return diag;
+    }
+    function createObjectLiteralError(node: ShorthandPropertyAssignment | SpreadAssignment | ComputedPropertyName) {
+        const diag = createDiagnosticForNode(node, errorByDeclarationKind[node.kind]);
+        const parentDeclaration = findNearestDeclaration(node);
+        if (parentDeclaration) {
+            const targetStr = isExportAssignment(parentDeclaration) ? "" : getTextOfNode(parentDeclaration.name, /*includeTrivia*/ false);
+            addRelatedInfo(diag, createDiagnosticForNode(parentDeclaration, relatedSuggestionByDeclarationKind[parentDeclaration.kind], targetStr));
+        }
+        return diag;
+    }
+    function createArrayLiteralError(node: ArrayLiteralExpression | SpreadElement) {
+        const diag = createDiagnosticForNode(node, errorByDeclarationKind[node.kind]);
+        const parentDeclaration = findNearestDeclaration(node);
+        if (parentDeclaration) {
+            const targetStr = isExportAssignment(parentDeclaration) ? "" : getTextOfNode(parentDeclaration.name, /*includeTrivia*/ false);
+            addRelatedInfo(diag, createDiagnosticForNode(parentDeclaration, relatedSuggestionByDeclarationKind[parentDeclaration.kind], targetStr));
+        }
+        return diag;
+    }
+    function createReturnTypeError(node: FunctionDeclaration | FunctionExpression | ArrowFunction | MethodDeclaration) {
+        const diag = createDiagnosticForNode(node, errorByDeclarationKind[node.kind]);
+        const parentDeclaration = findNearestDeclaration(node);
+        if (parentDeclaration) {
+            const targetStr = isExportAssignment(parentDeclaration) ? "" : getTextOfNode(parentDeclaration.name, /*includeTrivia*/ false);
+            addRelatedInfo(diag, createDiagnosticForNode(parentDeclaration, relatedSuggestionByDeclarationKind[parentDeclaration.kind], targetStr));
+        }
+        addRelatedInfo(diag, createDiagnosticForNode(node, relatedSuggestionByDeclarationKind[node.kind]));
+        return diag;
+    }
+    function createBindingElementError(node: BindingElement) {
+        return createDiagnosticForNode(node, Diagnostics.Binding_elements_can_t_be_exported_directly_with_isolatedDeclarations);
+    }
+    function createVariableOrPropertyError(node: VariableDeclaration | PropertyDeclaration | PropertySignature) {
+        const diag = createDiagnosticForNode(node, errorByDeclarationKind[node.kind]);
+        const targetStr = getTextOfNode(node.name, /*includeTrivia*/ false);
+        addRelatedInfo(diag, createDiagnosticForNode(node, relatedSuggestionByDeclarationKind[node.kind], targetStr));
+        return diag;
+    }
+    function createParameterError(node: ParameterDeclaration, message = errorByDeclarationKind[node.kind]) {
+        if (isSetAccessor(node.parent)) {
+            const { getAccessor, setAccessor } = resolver.getAllAccessorDeclarations(node.parent);
+            return createAccessorTypeError(getAccessor, setAccessor);
+        }
+        const diag = createDiagnosticForNode(node, message);
+        const targetStr = getTextOfNode(node.name, /*includeTrivia*/ false);
+        addRelatedInfo(diag, createDiagnosticForNode(node, relatedSuggestionByDeclarationKind[node.kind], targetStr));
+        return diag;
+    }
+    function createExpressionError(node: Expression) {
+        const parentDeclaration = findNearestDeclaration(node);
+        let diag: DiagnosticWithLocation;
+        if (parentDeclaration) {
+            const targetStr = isExportAssignment(parentDeclaration) ? "" : getTextOfNode(parentDeclaration.name, /*includeTrivia*/ false);
+            const parent = findAncestor(node.parent, n => isExportAssignment(n) || (isStatement(n) ? "quit" : !isParenthesizedExpression(n) && !isTypeAssertionExpression(n) && !isAsExpression(n)));
+            if (parentDeclaration === parent) {
+                diag = createDiagnosticForNode(node, errorByDeclarationKind[parentDeclaration.kind]);
                 addRelatedInfo(diag, createDiagnosticForNode(parentDeclaration, relatedSuggestionByDeclarationKind[parentDeclaration.kind], targetStr));
-            }
-            return diag;
-        }
-        function createArrayLiteralError(node: ArrayLiteralExpression | SpreadElement) {
-            const diag = createDiagnosticForNode(node, errorByDeclarationKind[node.kind]);
-            const parentDeclaration = findNearestDeclaration(node);
-            if (parentDeclaration) {
-                const targetStr = isExportAssignment(parentDeclaration) ? "" : getTextOfNode(parentDeclaration.name, /*includeTrivia*/ false);
-                addRelatedInfo(diag, createDiagnosticForNode(parentDeclaration, relatedSuggestionByDeclarationKind[parentDeclaration.kind], targetStr));
-            }
-            return diag;
-        }
-        function createReturnTypeError(node: FunctionDeclaration | FunctionExpression | ArrowFunction | MethodDeclaration) {
-            const diag = createDiagnosticForNode(node, errorByDeclarationKind[node.kind]);
-            const parentDeclaration = findNearestDeclaration(node);
-            if (parentDeclaration) {
-                const targetStr = isExportAssignment(parentDeclaration) ? "" : getTextOfNode(parentDeclaration.name, /*includeTrivia*/ false);
-                addRelatedInfo(diag, createDiagnosticForNode(parentDeclaration, relatedSuggestionByDeclarationKind[parentDeclaration.kind], targetStr));
-            }
-            addRelatedInfo(diag, createDiagnosticForNode(node, relatedSuggestionByDeclarationKind[node.kind]));
-            return diag;
-        }
-        function createBindingElementError(node: BindingElement) {
-            return createDiagnosticForNode(node, Diagnostics.Binding_elements_can_t_be_exported_directly_with_isolatedDeclarations);
-        }
-        function createVariableOrPropertyError(node: VariableDeclaration | PropertyDeclaration | PropertySignature) {
-            const diag = createDiagnosticForNode(node, errorByDeclarationKind[node.kind]);
-            const targetStr = getTextOfNode(node.name, /*includeTrivia*/ false);
-            addRelatedInfo(diag, createDiagnosticForNode(node, relatedSuggestionByDeclarationKind[node.kind], targetStr));
-            return diag;
-        }
-        function createParameterError(node: ParameterDeclaration, message = errorByDeclarationKind[node.kind]) {
-            if (isSetAccessor(node.parent)) {
-                const { getAccessor, setAccessor } = resolver.getAllAccessorDeclarations(node.parent);
-                return createAccessorTypeError(getAccessor, setAccessor);
-            }
-            const diag = createDiagnosticForNode(node, message);
-            const targetStr = getTextOfNode(node.name, /*includeTrivia*/ false);
-            addRelatedInfo(diag, createDiagnosticForNode(node, relatedSuggestionByDeclarationKind[node.kind], targetStr));
-            return diag;
-        }
-        function createExpressionError(node: Expression) {
-            const parentDeclaration = findNearestDeclaration(node);
-            let diag: DiagnosticWithLocation;
-            if (parentDeclaration) {
-                const targetStr = isExportAssignment(parentDeclaration) ? "" : getTextOfNode(parentDeclaration.name, /*includeTrivia*/ false);
-                const parent = findAncestor(node.parent, n => isExportAssignment(n) || (isStatement(n) ? "quit" : !isParenthesizedExpression(n) && !isTypeAssertionExpression(n) && !isAsExpression(n)));
-                if (parentDeclaration === parent) {
-                    diag = createDiagnosticForNode(node, errorByDeclarationKind[parentDeclaration.kind]);
-                    addRelatedInfo(diag, createDiagnosticForNode(parentDeclaration, relatedSuggestionByDeclarationKind[parentDeclaration.kind], targetStr));
-                }
-                else {
-                    diag = createDiagnosticForNode(node, Diagnostics.Expression_type_can_t_be_inferred_with_isolatedDeclarations);
-                    addRelatedInfo(diag, createDiagnosticForNode(parentDeclaration, relatedSuggestionByDeclarationKind[parentDeclaration.kind], targetStr));
-                    addRelatedInfo(diag, createDiagnosticForNode(node, Diagnostics.Add_a_type_assertion_to_this_expression_to_make_type_type_explicit));
-                }
             }
             else {
                 diag = createDiagnosticForNode(node, Diagnostics.Expression_type_can_t_be_inferred_with_isolatedDeclarations);
+                addRelatedInfo(diag, createDiagnosticForNode(parentDeclaration, relatedSuggestionByDeclarationKind[parentDeclaration.kind], targetStr));
+                addRelatedInfo(diag, createDiagnosticForNode(node, Diagnostics.Add_a_type_assertion_to_this_expression_to_make_type_type_explicit));
             }
-            return diag;
         }
-        function transformExpressionToType(node: Expression, inferenceFlags: InitializeTransformNarrowBehavior = InitializeTransformNarrowBehavior.None): TypeNode {
-            const typeNode = transformExpressionToTypeWorker(node, inferenceFlags);
-            const addUndefined = !!(inferenceFlags & InitializeTransformNarrowBehavior.AddUndefined);
-            if(!typeNode) {
-                return typeInferenceFallback(node, createExpressionError(node), addUndefined);
-            }
-            if(addUndefined) {
-                return addUndefinedInUnion(typeNode);
-            }
-            return typeNode;
+        else {
+            diag = createDiagnosticForNode(node, Diagnostics.Expression_type_can_t_be_inferred_with_isolatedDeclarations);
         }
-        function transformExpressionToTypeWorker(node: Expression, inferenceFlags: InitializeTransformNarrowBehavior = InitializeTransformNarrowBehavior.None): TypeNode | undefined {
-            switch (node.kind) {
-                case SyntaxKind.ParenthesizedExpression:
-                    return transformExpressionToType((node as ParenthesizedExpression).expression, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
-                case SyntaxKind.Identifier:
-                    if(resolver.isUndefinedIdentifier(node as Identifier)) {
-                        return createUndefinedTypeNode();
-                    }
-                    break;
-                case SyntaxKind.NullKeyword:
-                    if (strictNullChecks) {
-                        return factory.createLiteralTypeNode(factory.createNull());
-                    }
-                    else {
-                        return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
-                    }
-                case SyntaxKind.ArrowFunction:
-                case SyntaxKind.FunctionExpression:
-                    return transformFunctionExpressionOrArrowFunction(node as ArrowFunction | FunctionExpression);
-                case SyntaxKind.TypeAssertionExpression:
-                case SyntaxKind.AsExpression:
-                    const asExpression = node as AsExpression | TypeAssertion;
-                    if (isTypeReferenceNode(asExpression.type) && isConstTypeReference(asExpression.type)) {
-                        return transformExpressionToType(asExpression.expression, InitializeTransformNarrowBehavior.AsConst);
-                    }
-                    else {
-                        const type = asExpression.type;
-                        if(type.kind === SyntaxKind.TypeReference && inferenceFlags & InitializeTransformNarrowBehavior.NoTypeReferences) {
-                            return typeInferenceFallback(node, createExpressionError(node), !!(inferenceFlags & InitializeTransformNarrowBehavior.AddUndefined))
-                        }
-                        return visitType(type);
-                    }
-                case SyntaxKind.PrefixUnaryExpression:
-                    const unaryExpression = node as PrefixUnaryExpression;
-                    if(isPrimitiveLiteralValue(unaryExpression)) {
-                        if(unaryExpression.operand.kind === SyntaxKind.BigIntLiteral) {
-                            return literal(unaryExpression, SyntaxKind.BigIntKeyword, inferenceFlags);
-                        }
-                        if(unaryExpression.operand.kind === SyntaxKind.NumericLiteral) {
-                            return literal(unaryExpression, SyntaxKind.NumberKeyword, inferenceFlags);
-                        }
-                    }
-                    break;
-                case SyntaxKind.NumericLiteral:
-                    return literal(node as NumericLiteral, SyntaxKind.NumberKeyword, inferenceFlags);
-                case SyntaxKind.TemplateExpression:
-                    if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConstOrKeepLiterals)) {
-                        return factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
-                    }
-                    break;
-                case SyntaxKind.NoSubstitutionTemplateLiteral:
-                case SyntaxKind.StringLiteral:
-                    return literal(node as StringLiteral | NoSubstitutionTemplateLiteral, SyntaxKind.StringKeyword, inferenceFlags);
-                case SyntaxKind.BigIntLiteral:
-                    return literal(node as BigIntLiteral, SyntaxKind.BigIntKeyword, inferenceFlags);
-                case SyntaxKind.TrueKeyword:
-                case SyntaxKind.FalseKeyword:
-                    return literal(node as TrueLiteral | FalseLiteral, SyntaxKind.BooleanKeyword, inferenceFlags);
-                case SyntaxKind.ArrayLiteralExpression:
-                    return transformArrayLiteralToType(node as ArrayLiteralExpression, inferenceFlags);
-                case SyntaxKind.ObjectLiteralExpression:
-                    return transformObjectLiteralExpressionToType(node as ObjectLiteralExpression, inferenceFlags);
-            }
-            return undefined
+        return diag;
+    }
+    function transformExpressionToType(node: Expression, inferenceFlags: InitializeTransformNarrowBehavior = InitializeTransformNarrowBehavior.None): TypeNode {
+        const typeNode = transformExpressionToTypeWorker(node, inferenceFlags);
+        const addUndefined = !!(inferenceFlags & InitializeTransformNarrowBehavior.AddUndefined);
+        if(!typeNode) {
+            return typeInferenceFallback(node, createExpressionError(node), addUndefined);
         }
-        function requiresImplicitUndefined(node: ParameterDeclaration) {
-            return resolver.requiresAddingImplicitUndefined(node);
+        if(addUndefined) {
+            return addUndefinedInUnion(typeNode);
         }
-        function typeInferenceFallback(node: Exclude<HasInferredType, ParameterDeclaration> | Expression, diagMessage?: DiagnosticWithLocation, addUndefined?: boolean): TypeNode {
-            if (isolatedDeclarations && diagMessage) {
-                reportIsolatedDeclarationError(node, diagMessage);
-            }
-            if(isolatedDeclarationsNoFallback) {
-                return makeInvalidType();
-            }
-            if (hasInferredType(node)) {
-                return typeInferenceFallbackFromDeclaration(node, addUndefined);
-            }
-
-            const parent = findAncestor(node.parent, e => e.kind !== SyntaxKind.ParenthesizedExpression);
-            if (parent && hasInferredType(parent)) {
-                Debug.assert(node.kind !== SyntaxKind.Parameter, "Parameters should go through ensureParameter");
-                return typeInferenceFallbackFromDeclaration(parent);
-            }
-
-            return resolver.createTypeOfExpression(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker) ?? makeInvalidType();
-        }
-        function typeInferenceFallbackFromDeclaration(node: HasInferredType, addUndefined?: boolean) {
-            const savedErrorNameNode = errorNameNode;
-            const savedErrorFallbackNode = errorFallbackNode;
-            const savedReferenceRequestingNode = referenceRequestingNode;
-            let typeNode: TypeNode | undefined;
-            errorNameNode = node.name;
-            errorFallbackNode = node;
-            referenceRequestingNode = node;
-            errorNameNode = node.name;
-            let oldDiag: typeof getSymbolAccessibilityDiagnostic | undefined;
-            if (!suppressNewDiagnosticContexts) {
-                oldDiag = getSymbolAccessibilityDiagnostic;
-                getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNode(node);
-            }
-            switch (node.kind) {
-                case SyntaxKind.PropertyAssignment:
-                    typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags | NodeBuilderFlags.InObjectTypeLiteral, symbolTracker, addUndefined);
-                    resolver.createTypeOfDeclaration(node.parent.parent as any, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker, addUndefined);
-                    break;
-                case SyntaxKind.Parameter:
-                case SyntaxKind.PropertySignature:
-                case SyntaxKind.PropertyDeclaration:
-                case SyntaxKind.BindingElement:
-                case SyntaxKind.VariableDeclaration:
-                    typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker, addUndefined);
-                    break;
-                case SyntaxKind.FunctionDeclaration:
-                case SyntaxKind.ConstructSignature:
-                case SyntaxKind.MethodSignature:
-                case SyntaxKind.MethodDeclaration:
-                case SyntaxKind.GetAccessor:
-                case SyntaxKind.SetAccessor:
-                case SyntaxKind.CallSignature:
-                case SyntaxKind.ArrowFunction:
-                case SyntaxKind.FunctionExpression:
-                    typeNode = resolver.createReturnTypeOfSignatureDeclaration(node, node, declarationEmitNodeBuilderFlags, symbolTracker);
-                    break;
-                default:
-                    Debug.assertNever(node);
-
-            }
-            errorNameNode = savedErrorNameNode;
-            errorFallbackNode = savedErrorFallbackNode;
-            referenceRequestingNode = savedReferenceRequestingNode;
-            if (oldDiag) {
-                getSymbolAccessibilityDiagnostic = oldDiag;
-            }
-            return typeNode ?? makeInvalidType();
-        }
-        function transformFunctionExpressionOrArrowFunction(fnNode: FunctionExpression | ArrowFunction) {
-            const oldEnclosingDeclaration = enclosingDeclaration;
-            enclosingDeclaration = fnNode;
-
-            const returnType = !fnNode.type ? typeInferenceFallback(fnNode, createReturnTypeError(fnNode)) :
-                visitType(fnNode.type);
-            const fnTypeNode = factory.createFunctionTypeNode(
-                visitNodes(fnNode.typeParameters, visitDeclarationSubtree, isTypeParameterDeclaration),
-                fnNode.parameters.map(p => ensureParameter(p)),
-                returnType,
-            );
-            enclosingDeclaration = oldEnclosingDeclaration;
-            return fnTypeNode;
-        }
-        function canGetTypeFromArrayLiteral(arrayLiteral: ArrayLiteralExpression) {
-            for (const element of arrayLiteral.elements) {
-                if (element.kind === SyntaxKind.SpreadElement) {
-                    reportIsolatedDeclarationError(element, createArrayLiteralError(element as SpreadElement));
-                    return false;
+        return typeNode;
+    }
+    function transformExpressionToTypeWorker(node: Expression, inferenceFlags: InitializeTransformNarrowBehavior = InitializeTransformNarrowBehavior.None): TypeNode | undefined {
+        switch (node.kind) {
+            case SyntaxKind.ParenthesizedExpression:
+                return transformExpressionToType((node as ParenthesizedExpression).expression, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
+            case SyntaxKind.Identifier:
+                if(resolver.isUndefinedIdentifier(node as Identifier)) {
+                    return createUndefinedTypeNode();
                 }
-            }
-            return true;
-        }
-        function transformArrayLiteralToType(arrayLiteral: ArrayLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
-            if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConst)) {
-                return typeInferenceFallback(arrayLiteral, createArrayLiteralError(arrayLiteral));
-            }
-            if (!canGetTypeFromArrayLiteral(arrayLiteral)) {
-                return typeInferenceFallback(arrayLiteral);
-            }
-            const elementTypesInfo: TypeNode[] = [];
-            for (const element of arrayLiteral.elements) {
-                Debug.assert(element.kind !== SyntaxKind.SpreadElement);
-                if (element.kind === SyntaxKind.OmittedExpression) {
-                    elementTypesInfo.push(
-                        createUndefinedTypeNode(),
-                    );
+                break;
+            case SyntaxKind.NullKeyword:
+                if (strictNullChecks) {
+                    return factory.createLiteralTypeNode(factory.createNull());
                 }
                 else {
-                    const elementType = transformExpressionToType(element, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
-                    elementTypesInfo.push(elementType);
+                    return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
                 }
-            }
-            const tupleType = factory.createTupleTypeNode(elementTypesInfo);
-            tupleType.emitNode = { flags: 1, autoGenerate: undefined, internalFlags: 0 };
-            return factory.createTypeOperatorNode(SyntaxKind.ReadonlyKeyword, tupleType);
-        }
-        function canGetTypeFromObjectLiteral(objectLiteral: ObjectLiteralExpression) {
-            let result = true;
-            for (const prop of objectLiteral.properties) {
-                if (prop.flags & NodeFlags.ThisNodeHasError) {
-                    result = false;
-                    break; // Bail if parse errors
+            case SyntaxKind.ArrowFunction:
+            case SyntaxKind.FunctionExpression:
+                return transformFunctionExpressionOrArrowFunction(node as ArrowFunction | FunctionExpression);
+            case SyntaxKind.TypeAssertionExpression:
+            case SyntaxKind.AsExpression:
+                const asExpression = node as AsExpression | TypeAssertion;
+                if (isTypeReferenceNode(asExpression.type) && isConstTypeReference(asExpression.type)) {
+                    return transformExpressionToType(asExpression.expression, InitializeTransformNarrowBehavior.AsConst);
                 }
-                if (prop.kind === SyntaxKind.ShorthandPropertyAssignment || prop.kind === SyntaxKind.SpreadAssignment) {
-                    reportIsolatedDeclarationError(prop, createObjectLiteralError(prop));
-                    result = false;
+                else {
+                    const type = asExpression.type;
+                    if(type.kind === SyntaxKind.TypeReference && inferenceFlags & InitializeTransformNarrowBehavior.NoTypeReferences) {
+                        return typeInferenceFallback(node, createExpressionError(node), !!(inferenceFlags & InitializeTransformNarrowBehavior.AddUndefined))
+                    }
+                    return visitType(type);
                 }
-                else if (prop.name.flags & NodeFlags.ThisNodeHasError) {
-                    result = false;
-                    break; // Bail if parse errors
-                }
-                else if (prop.name.kind === SyntaxKind.PrivateIdentifier) {
-                    // Not valid in object literals but the compiler will complain about this, we just ignore it here.
-                    result = false;
-                }
-                else if (prop.name.kind === SyntaxKind.ComputedPropertyName) {
-                    const expression = prop.name.expression;
-                    if (!isPrimitiveLiteralValue(expression, /*includeBigInt*/ false) && !isEntityNameExpression(expression)) {
-                        reportIsolatedDeclarationError(prop, createObjectLiteralError(prop.name));
-                        result = false;
+            case SyntaxKind.PrefixUnaryExpression:
+                const unaryExpression = node as PrefixUnaryExpression;
+                if(isPrimitiveLiteralValue(unaryExpression)) {
+                    if(unaryExpression.operand.kind === SyntaxKind.BigIntLiteral) {
+                        return literal(unaryExpression, SyntaxKind.BigIntKeyword, inferenceFlags);
+                    }
+                    if(unaryExpression.operand.kind === SyntaxKind.NumericLiteral) {
+                        return literal(unaryExpression, SyntaxKind.NumberKeyword, inferenceFlags);
                     }
                 }
-            }
-            return result;
+                break;
+            case SyntaxKind.NumericLiteral:
+                return literal(node as NumericLiteral, SyntaxKind.NumberKeyword, inferenceFlags);
+            case SyntaxKind.TemplateExpression:
+                if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConstOrKeepLiterals)) {
+                    return factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
+                }
+                break;
+            case SyntaxKind.NoSubstitutionTemplateLiteral:
+            case SyntaxKind.StringLiteral:
+                return literal(node as StringLiteral | NoSubstitutionTemplateLiteral, SyntaxKind.StringKeyword, inferenceFlags);
+            case SyntaxKind.BigIntLiteral:
+                return literal(node as BigIntLiteral, SyntaxKind.BigIntKeyword, inferenceFlags);
+            case SyntaxKind.TrueKeyword:
+            case SyntaxKind.FalseKeyword:
+                return literal(node as TrueLiteral | FalseLiteral, SyntaxKind.BooleanKeyword, inferenceFlags);
+            case SyntaxKind.ArrayLiteralExpression:
+                return transformArrayLiteralToType(node as ArrayLiteralExpression, inferenceFlags);
+            case SyntaxKind.ObjectLiteralExpression:
+                return transformObjectLiteralExpressionToType(node as ObjectLiteralExpression, inferenceFlags);
         }
-        function transformObjectLiteralExpressionToType(objectLiteral: ObjectLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
-            if (!canGetTypeFromObjectLiteral(objectLiteral)) return typeInferenceFallback(objectLiteral);
+        return undefined
+    }
+    function requiresImplicitUndefined(node: ParameterDeclaration) {
+        return resolver.requiresAddingImplicitUndefined(node);
+    }
+    function typeInferenceFallback(node: Exclude<HasInferredType, ParameterDeclaration> | Expression, diagMessage?: DiagnosticWithLocation, addUndefined?: boolean): TypeNode {
+        if (isolatedDeclarations && diagMessage) {
+            reportIsolatedDeclarationError(node, diagMessage);
+        }
+        if(isolatedDeclarationsNoFallback) {
+            return makeInvalidType();
+        }
+        if (hasInferredType(node)) {
+            return typeInferenceFallbackFromDeclaration(node, addUndefined);
+        }
 
-            const properties: TypeElement[] = [];
-            for (const prop of objectLiteral.properties) {
-                Debug.assert(!isShorthandPropertyAssignment(prop) && !isSpreadAssignment(prop));
+        const parent = findAncestor(node.parent, e => e.kind !== SyntaxKind.ParenthesizedExpression);
+        if (parent && hasInferredType(parent)) {
+            Debug.assert(node.kind !== SyntaxKind.Parameter, "Parameters should go through ensureParameter");
+            return typeInferenceFallbackFromDeclaration(parent);
+        }
 
-                let name = prop.name;
-                if (prop.name.kind === SyntaxKind.ComputedPropertyName) {
-                    let computedNameExpressionType;
-                    if (isEntityNameExpression(prop.name.expression)) {
-                        // Check if the symbol is accessible. If not, don't report any errors on it, we'll fall back to the inferred type
-                        // If the symbol is accessible checkEntityNameVisibility will add the appropriate aliases to make visible
-                        const oldDiag = getSymbolAccessibilityDiagnostic;
-                        getSymbolAccessibilityDiagnostic = () => undefined;
-                        const isEntityNameAccessible = checkEntityNameVisibility(prop.name.expression, prop);
-                        getSymbolAccessibilityDiagnostic = oldDiag;
+        return resolver.createTypeOfExpression(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker) ?? makeInvalidType();
+    }
+    function typeInferenceFallbackFromDeclaration(node: HasInferredType, addUndefined?: boolean) {
+        const savedErrorNameNode = errorNameNode;
+        const savedErrorFallbackNode = errorFallbackNode;
+        const savedReferenceRequestingNode = referenceRequestingNode;
+        let typeNode: TypeNode | undefined;
+        errorNameNode = node.name;
+        errorFallbackNode = node;
+        referenceRequestingNode = node;
+        errorNameNode = node.name;
+        let oldDiag: typeof getSymbolAccessibilityDiagnostic | undefined;
+        if (!suppressNewDiagnosticContexts) {
+            oldDiag = getSymbolAccessibilityDiagnostic;
+            getSymbolAccessibilityDiagnostic = createGetSymbolAccessibilityDiagnosticForNode(node);
+        }
+        switch (node.kind) {
+            case SyntaxKind.PropertyAssignment:
+                typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags | NodeBuilderFlags.InObjectTypeLiteral, symbolTracker, addUndefined);
+                resolver.createTypeOfDeclaration(node.parent.parent as any, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker, addUndefined);
+                break;
+            case SyntaxKind.Parameter:
+            case SyntaxKind.PropertySignature:
+            case SyntaxKind.PropertyDeclaration:
+            case SyntaxKind.BindingElement:
+            case SyntaxKind.VariableDeclaration:
+                typeNode = resolver.createTypeOfDeclaration(node, enclosingDeclaration, declarationEmitNodeBuilderFlags, symbolTracker, addUndefined);
+                break;
+            case SyntaxKind.FunctionDeclaration:
+            case SyntaxKind.ConstructSignature:
+            case SyntaxKind.MethodSignature:
+            case SyntaxKind.MethodDeclaration:
+            case SyntaxKind.GetAccessor:
+            case SyntaxKind.SetAccessor:
+            case SyntaxKind.CallSignature:
+            case SyntaxKind.ArrowFunction:
+            case SyntaxKind.FunctionExpression:
+                typeNode = resolver.createReturnTypeOfSignatureDeclaration(node, node, declarationEmitNodeBuilderFlags, symbolTracker);
+                break;
+            default:
+                Debug.assertNever(node);
 
-                        if (!resolver.isLiteralComputedName(prop.name)) {
-                            reportIsolatedDeclarationError(prop.name, createObjectLiteralError(prop.name));
-                        }
-                        if (!isEntityNameAccessible) {
-                            computedNameExpressionType = typeInferenceFallback(prop.name.expression, createObjectLiteralError(prop.name));
-                            if (computedNameExpressionType) {
-                                if (
-                                    isTypeQueryNode(computedNameExpressionType) &&
-                                    (isIdentifier(computedNameExpressionType.exprName) || isEntityNameExpression(computedNameExpressionType.exprName))
-                                ) {
-                                    name = factory.createComputedPropertyName(computedNameExpressionType.exprName);
-                                }
-                                else if (isLiteralTypeNode(computedNameExpressionType)) {
-                                    name = factory.createComputedPropertyName(computedNameExpressionType.literal);
-                                }
+        }
+        errorNameNode = savedErrorNameNode;
+        errorFallbackNode = savedErrorFallbackNode;
+        referenceRequestingNode = savedReferenceRequestingNode;
+        if (oldDiag) {
+            getSymbolAccessibilityDiagnostic = oldDiag;
+        }
+        return typeNode ?? makeInvalidType();
+    }
+    function transformFunctionExpressionOrArrowFunction(fnNode: FunctionExpression | ArrowFunction) {
+        const oldEnclosingDeclaration = enclosingDeclaration;
+        enclosingDeclaration = fnNode;
+
+        const returnType = !fnNode.type ? typeInferenceFallback(fnNode, createReturnTypeError(fnNode)) :
+            visitType(fnNode.type);
+        const fnTypeNode = factory.createFunctionTypeNode(
+            visitNodes(fnNode.typeParameters, visitDeclarationSubtree, isTypeParameterDeclaration),
+            fnNode.parameters.map(p => ensureParameter(p)),
+            returnType,
+        );
+        enclosingDeclaration = oldEnclosingDeclaration;
+        return fnTypeNode;
+    }
+    function canGetTypeFromArrayLiteral(arrayLiteral: ArrayLiteralExpression) {
+        for (const element of arrayLiteral.elements) {
+            if (element.kind === SyntaxKind.SpreadElement) {
+                reportIsolatedDeclarationError(element, createArrayLiteralError(element as SpreadElement));
+                return false;
+            }
+        }
+        return true;
+    }
+    function transformArrayLiteralToType(arrayLiteral: ArrayLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
+        if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConst)) {
+            return typeInferenceFallback(arrayLiteral, createArrayLiteralError(arrayLiteral));
+        }
+        if (!canGetTypeFromArrayLiteral(arrayLiteral)) {
+            return typeInferenceFallback(arrayLiteral);
+        }
+        const elementTypesInfo: TypeNode[] = [];
+        for (const element of arrayLiteral.elements) {
+            Debug.assert(element.kind !== SyntaxKind.SpreadElement);
+            if (element.kind === SyntaxKind.OmittedExpression) {
+                elementTypesInfo.push(
+                    createUndefinedTypeNode(),
+                );
+            }
+            else {
+                const elementType = transformExpressionToType(element, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
+                elementTypesInfo.push(elementType);
+            }
+        }
+        const tupleType = factory.createTupleTypeNode(elementTypesInfo);
+        tupleType.emitNode = { flags: 1, autoGenerate: undefined, internalFlags: 0 };
+        return factory.createTypeOperatorNode(SyntaxKind.ReadonlyKeyword, tupleType);
+    }
+    function canGetTypeFromObjectLiteral(objectLiteral: ObjectLiteralExpression) {
+        let result = true;
+        for (const prop of objectLiteral.properties) {
+            if (prop.flags & NodeFlags.ThisNodeHasError) {
+                result = false;
+                break; // Bail if parse errors
+            }
+            if (prop.kind === SyntaxKind.ShorthandPropertyAssignment || prop.kind === SyntaxKind.SpreadAssignment) {
+                reportIsolatedDeclarationError(prop, createObjectLiteralError(prop));
+                result = false;
+            }
+            else if (prop.name.flags & NodeFlags.ThisNodeHasError) {
+                result = false;
+                break; // Bail if parse errors
+            }
+            else if (prop.name.kind === SyntaxKind.PrivateIdentifier) {
+                // Not valid in object literals but the compiler will complain about this, we just ignore it here.
+                result = false;
+            }
+            else if (prop.name.kind === SyntaxKind.ComputedPropertyName) {
+                const expression = prop.name.expression;
+                if (!isPrimitiveLiteralValue(expression, /*includeBigInt*/ false) && !isEntityNameExpression(expression)) {
+                    reportIsolatedDeclarationError(prop, createObjectLiteralError(prop.name));
+                    result = false;
+                }
+            }
+        }
+        return result;
+    }
+    function transformObjectLiteralExpressionToType(objectLiteral: ObjectLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
+        if (!canGetTypeFromObjectLiteral(objectLiteral)) return typeInferenceFallback(objectLiteral);
+
+        const properties: TypeElement[] = [];
+        for (const prop of objectLiteral.properties) {
+            Debug.assert(!isShorthandPropertyAssignment(prop) && !isSpreadAssignment(prop));
+
+            let name = prop.name;
+            if (prop.name.kind === SyntaxKind.ComputedPropertyName) {
+                let computedNameExpressionType;
+                if (isEntityNameExpression(prop.name.expression)) {
+                    // Check if the symbol is accessible. If not, don't report any errors on it, we'll fall back to the inferred type
+                    // If the symbol is accessible checkEntityNameVisibility will add the appropriate aliases to make visible
+                    const oldDiag = getSymbolAccessibilityDiagnostic;
+                    getSymbolAccessibilityDiagnostic = () => undefined;
+                    const isEntityNameAccessible = checkEntityNameVisibility(prop.name.expression, prop);
+                    getSymbolAccessibilityDiagnostic = oldDiag;
+
+                    if (!resolver.isLiteralComputedName(prop.name)) {
+                        reportIsolatedDeclarationError(prop.name, createObjectLiteralError(prop.name));
+                    }
+                    if (!isEntityNameAccessible) {
+                        computedNameExpressionType = typeInferenceFallback(prop.name.expression, createObjectLiteralError(prop.name));
+                        if (computedNameExpressionType) {
+                            if (
+                                isTypeQueryNode(computedNameExpressionType) &&
+                                (isIdentifier(computedNameExpressionType.exprName) || isEntityNameExpression(computedNameExpressionType.exprName))
+                            ) {
+                                name = factory.createComputedPropertyName(computedNameExpressionType.exprName);
+                            }
+                            else if (isLiteralTypeNode(computedNameExpressionType)) {
+                                name = factory.createComputedPropertyName(computedNameExpressionType.literal);
                             }
                         }
                     }
                 }
-                let newProp;
-                switch (prop.kind) {
-                    case SyntaxKind.MethodDeclaration:
-                        newProp = transformMethodDeclarationToSignature(prop, name, inferenceFlags);
-                        break;
-                    case SyntaxKind.PropertyAssignment:
-                        newProp = transformPropertyAssignment(prop, name, inferenceFlags);
-                        break;
-                    case SyntaxKind.SetAccessor:
-                    case SyntaxKind.GetAccessor:
-                        newProp = transformAccessor(prop, name);
-                        break;
-                }
-                if(newProp) {
-                    setCommentRange(newProp, prop);
-                    properties.push(newProp); 
-                }
             }
-
-            return factory.createTypeLiteralNode(properties);
+            let newProp;
+            switch (prop.kind) {
+                case SyntaxKind.MethodDeclaration:
+                    newProp = transformMethodDeclarationToSignature(prop, name, inferenceFlags);
+                    break;
+                case SyntaxKind.PropertyAssignment:
+                    newProp = transformPropertyAssignment(prop, name, inferenceFlags);
+                    break;
+                case SyntaxKind.SetAccessor:
+                case SyntaxKind.GetAccessor:
+                    newProp = transformAccessor(prop, name);
+                    break;
+            }
+            if(newProp) {
+                setCommentRange(newProp, prop);
+                properties.push(newProp); 
+            }
         }
 
-        function transformPropertyAssignment(prop: PropertyAssignment, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
-            const modifiers = inferenceFlags & InitializeTransformNarrowBehavior.AsConst ?
-                [factory.createModifier(SyntaxKind.ReadonlyKeyword)] :
-                [];
-            const typeNode = transformExpressionToType(prop.initializer, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
-            return factory.createPropertySignature(
-                modifiers,
-                name,
-                /*questionToken*/ undefined,
-                typeNode,
-            );
-        }
-        function transformMethodDeclarationToSignature(method: MethodDeclaration, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
-            const oldEnclosingDeclaration = enclosingDeclaration;
-            enclosingDeclaration = method;
-            try {
-                const returnType = method.type === undefined ?
-                    typeInferenceFallback(method, createReturnTypeError(method)) :
-                    visitType(method.type);
-                const typeParameters = visitNodes(method.typeParameters, visitDeclarationSubtree, isTypeParameterDeclaration);
-                const parameters = method.parameters.map(p => ensureParameter(p));
-                if (inferenceFlags & InitializeTransformNarrowBehavior.AsConst) {
-                    return factory.createPropertySignature(
-                        [factory.createModifier(SyntaxKind.ReadonlyKeyword)],
-                        name,
-                        method.questionToken,
-                        factory.createFunctionTypeNode(
-                            typeParameters,
-                            parameters,
-                            returnType,
-                        ),
-                    );
-                }
-                else {
-                    if (isIdentifier(name) && name.escapedText === "new") {
-                        name = factory.createStringLiteral("new");
-                    }
-                    return factory.createMethodSignature(
-                        [],
-                        name,
-                        method.questionToken,
+        return factory.createTypeLiteralNode(properties);
+    }
+
+    function transformPropertyAssignment(prop: PropertyAssignment, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
+        const modifiers = inferenceFlags & InitializeTransformNarrowBehavior.AsConst ?
+            [factory.createModifier(SyntaxKind.ReadonlyKeyword)] :
+            [];
+        const typeNode = transformExpressionToType(prop.initializer, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
+        return factory.createPropertySignature(
+            modifiers,
+            name,
+            /*questionToken*/ undefined,
+            typeNode,
+        );
+    }
+    function transformMethodDeclarationToSignature(method: MethodDeclaration, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
+        const oldEnclosingDeclaration = enclosingDeclaration;
+        enclosingDeclaration = method;
+        try {
+            const returnType = method.type === undefined ?
+                typeInferenceFallback(method, createReturnTypeError(method)) :
+                visitType(method.type);
+            const typeParameters = visitNodes(method.typeParameters, visitDeclarationSubtree, isTypeParameterDeclaration);
+            const parameters = method.parameters.map(p => ensureParameter(p));
+            if (inferenceFlags & InitializeTransformNarrowBehavior.AsConst) {
+                return factory.createPropertySignature(
+                    [factory.createModifier(SyntaxKind.ReadonlyKeyword)],
+                    name,
+                    method.questionToken,
+                    factory.createFunctionTypeNode(
                         typeParameters,
                         parameters,
                         returnType,
-                    );
-                }
-            }
-            finally {
-                enclosingDeclaration = oldEnclosingDeclaration;
-            }
-        }
-
-        function transformAccessor(accessor: GetAccessorDeclaration | SetAccessorDeclaration, name: PropertyName) {
-            const allAccessors = resolver.getAllAccessorDeclarations(accessor);
-            const getAccessorType = allAccessors.getAccessor && getTypeAnnotationFromAccessor(allAccessors.getAccessor);
-            const setAccessorType = allAccessors.setAccessor && getTypeAnnotationFromAccessor(allAccessors.setAccessor);
-            // We have types for both accessors, we can't know if they are the same type so we keep both accessors
-            if (getAccessorType !== undefined && setAccessorType !== undefined) {
-                const parameters = accessor.parameters.map(p => ensureParameter(p));
-
-                if (isGetAccessor(accessor)) {
-                    return factory.updateGetAccessorDeclaration(
-                        accessor,
-                        [],
-                        name,
-                        parameters,
-                        visitType(getAccessorType),
-                        /*body*/ undefined,
-                    );
-                }
-                else {
-                    return factory.updateSetAccessorDeclaration(
-                        accessor,
-                        [],
-                        name,
-                        parameters,
-                        /*body*/ undefined,
-                    );
-                }
-            }
-            else if (allAccessors.firstAccessor === accessor) {
-                const foundType = getAccessorType ?? setAccessorType;
-                const propertyType = foundType === undefined ?
-                    typeInferenceFallback(accessor, createAccessorTypeError(allAccessors.getAccessor, allAccessors.setAccessor)) :
-                    visitType(foundType);
-                const propertySignature = factory.createPropertySignature(
-                    allAccessors.setAccessor === undefined ? [factory.createModifier(SyntaxKind.ReadonlyKeyword)] : [],
-                    name,
-                    /*questionToken*/ undefined,
-                    propertyType,
+                    ),
                 );
-                return propertySignature;
-            }
-        }
-        function createUndefinedTypeNode() {
-            if (strictNullChecks) {
-                return factory.createKeywordTypeNode(SyntaxKind.UndefinedKeyword);
             }
             else {
-                return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
+                if (isIdentifier(name) && name.escapedText === "new") {
+                    name = factory.createStringLiteral("new");
+                }
+                return factory.createMethodSignature(
+                    [],
+                    name,
+                    method.questionToken,
+                    typeParameters,
+                    parameters,
+                    returnType,
+                );
             }
         }
-        function literal(node: PrimitiveLiteral, baseType: string | KeywordTypeSyntaxKind, narrowBehavior: InitializeTransformNarrowBehavior) {
-            if (narrowBehavior & InitializeTransformNarrowBehavior.AsConstOrKeepLiterals) {
-                return factory.createLiteralTypeNode(clonePrimitiveLiteralValue(node));
+        finally {
+            enclosingDeclaration = oldEnclosingDeclaration;
+        }
+    }
+
+    function transformAccessor(accessor: GetAccessorDeclaration | SetAccessorDeclaration, name: PropertyName) {
+        const allAccessors = resolver.getAllAccessorDeclarations(accessor);
+        const getAccessorType = allAccessors.getAccessor && getTypeAnnotationFromAccessor(allAccessors.getAccessor);
+        const setAccessorType = allAccessors.setAccessor && getTypeAnnotationFromAccessor(allAccessors.setAccessor);
+        // We have types for both accessors, we can't know if they are the same type so we keep both accessors
+        if (getAccessorType !== undefined && setAccessorType !== undefined) {
+            const parameters = accessor.parameters.map(p => ensureParameter(p));
+
+            if (isGetAccessor(accessor)) {
+                return factory.updateGetAccessorDeclaration(
+                    accessor,
+                    [],
+                    name,
+                    parameters,
+                    visitType(getAccessorType),
+                    /*body*/ undefined,
+                );
             }
             else {
-                return typeof baseType === "number" ? factory.createKeywordTypeNode(baseType) : factory.createTypeReferenceNode(baseType);
+                return factory.updateSetAccessorDeclaration(
+                    accessor,
+                    [],
+                    name,
+                    parameters,
+                    /*body*/ undefined,
+                );
             }
         }
-
-        function visitType(type: TypeNode) {
-            return visitNode(type, visitDeclarationSubtree, isTypeNode)!;
+        else if (allAccessors.firstAccessor === accessor) {
+            const foundType = getAccessorType ?? setAccessorType;
+            const propertyType = foundType === undefined ?
+                typeInferenceFallback(accessor, createAccessorTypeError(allAccessors.getAccessor, allAccessors.setAccessor)) :
+                visitType(foundType);
+            const propertySignature = factory.createPropertySignature(
+                allAccessors.setAccessor === undefined ? [factory.createModifier(SyntaxKind.ReadonlyKeyword)] : [],
+                name,
+                /*questionToken*/ undefined,
+                propertyType,
+            );
+            return propertySignature;
         }
+    }
+    function createUndefinedTypeNode() {
+        if (strictNullChecks) {
+            return factory.createKeywordTypeNode(SyntaxKind.UndefinedKeyword);
+        }
+        else {
+            return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
+        }
+    }
+    function literal(node: PrimitiveLiteral, baseType: string | KeywordTypeSyntaxKind, narrowBehavior: InitializeTransformNarrowBehavior) {
+        if (narrowBehavior & InitializeTransformNarrowBehavior.AsConstOrKeepLiterals) {
+            return factory.createLiteralTypeNode(clonePrimitiveLiteralValue(node));
+        }
+        else {
+            return typeof baseType === "number" ? factory.createKeywordTypeNode(baseType) : factory.createTypeReferenceNode(baseType);
+        }
+    }
 
-        function addUndefinedInUnion(type: TypeNode) {
-            if (isUnionTypeNode(type)) {
-                const hasUndefined = type.types.some(p => p.kind === SyntaxKind.UndefinedKeyword);
-                if (hasUndefined) return type;
+    function visitType(type: TypeNode) {
+        return visitNode(type, visitDeclarationSubtree, isTypeNode)!;
+    }
 
-                return factory.createUnionTypeNode([
-                    ...type.types,
-                    factory.createKeywordTypeNode(SyntaxKind.UndefinedKeyword),
-                ]);
-            }
+    function addUndefinedInUnion(type: TypeNode) {
+        if (isUnionTypeNode(type)) {
+            const hasUndefined = type.types.some(p => p.kind === SyntaxKind.UndefinedKeyword);
+            if (hasUndefined) return type;
+
             return factory.createUnionTypeNode([
-                type,
+                ...type.types,
                 factory.createKeywordTypeNode(SyntaxKind.UndefinedKeyword),
             ]);
         }
-        function transformInitializerToTypeNode(node: HasInferredType | ExportAssignment, type: TypeNode | undefined): TypeNode {
-            const savedErrorNameNode = errorNameNode;
-            const savedErrorFallbackNode = errorFallbackNode;
-            const savedReferenceRequestingNode = referenceRequestingNode;
-            referenceRequestingNode = node;
+        return factory.createUnionTypeNode([
+            type,
+            factory.createKeywordTypeNode(SyntaxKind.UndefinedKeyword),
+        ]);
+    }
+    function transformInitializerToTypeNode(node: HasInferredType | ExportAssignment, type: TypeNode | undefined): TypeNode {
+        const savedErrorNameNode = errorNameNode;
+        const savedErrorFallbackNode = errorFallbackNode;
+        const savedReferenceRequestingNode = referenceRequestingNode;
+        referenceRequestingNode = node;
 
-            errorNameNode = node.name;
-            errorFallbackNode = node;
-            const result = transformInitializerToTypeNodeWorker(node, type);
-            errorNameNode = savedErrorNameNode;
-            errorFallbackNode = savedErrorFallbackNode;
-            referenceRequestingNode = savedReferenceRequestingNode;
-            return result;
-        }
-        function transformInitializerToTypeNodeWorker(node: HasInferredType | ExportAssignment, type: TypeNode | undefined): TypeNode {
-            if (isParameter(node)) {
-                const addUndefined = requiresImplicitUndefined(node);
-                if (addUndefined || (!type && !(node.initializer && isIdentifier(node.name)))) {
-                    if(isolatedDeclarations) {
-                        const message = !addUndefined ? undefined:Diagnostics.Declaration_emit_for_this_parameter_requires_implicitly_adding_undefined_to_it_s_type_This_is_not_supported_with_isolatedDeclarations;
-                        reportIsolatedDeclarationError(node, createParameterError(node, message));
-                        if(isolatedDeclarationsNoFallback) {
-                            return makeInvalidType();
-                        }
-                    }
-                    return typeInferenceFallbackFromDeclaration(node, addUndefined);
-                }
-                if (type) {
-                    return visitNode(type, visitDeclarationSubtree, isTypeNode)!;
-                }
-                if(node.initializer) {
-                    return transformExpressionToType(node.initializer);
-                }
-                Debug.fail("If parameter does not have type or initializer it should fall back to inference above");
-            }
-            else if (isExportAssignment(node)) {
-                return transformExpressionToType(node.expression, InitializeTransformNarrowBehavior.KeepLiterals);
-            }
-            else if (isVariableDeclaration(node)) {
-                const firstDeclaration = node.symbol.valueDeclaration;
-                // Use first declaration of variable for the type
-                if (node !== firstDeclaration && firstDeclaration && isVariableDeclaration(firstDeclaration)) {
-                    node = firstDeclaration;
-                    type = type ?? firstDeclaration.type;
-                }
-                if (type) {
-                    return visitNode(type, visitDeclarationSubtree, isTypeNode)!;
-                }
-                else if (node.initializer) {
-                    if (isClassExpression(node.initializer)) {
-                        return typeInferenceFallback(node.initializer, createDiagnosticForNode(node.initializer, Diagnostics.Inference_from_class_expressions_is_not_supported_with_isolatedDeclarations));
-                    }
-                    else {
-                        if (resolver.isExpandoFunction(node)) {
-                            if (isolatedDeclarations) {
-                                resolver.getPropertiesOfContainerFunction(node)
-                                    .forEach(p => {
-                                        if (isExpandoPropertyDeclaration(p.valueDeclaration)) {
-                                            const errorTarget = isBinaryExpression(p.valueDeclaration) ?
-                                                p.valueDeclaration.left :
-                                                p.valueDeclaration;
-
-                                            reportIsolatedDeclarationError(
-                                                errorTarget,
-                                                createDiagnosticForNode(
-                                                    errorTarget,
-                                                    Diagnostics.Assigning_properties_to_functions_without_declaring_them_is_not_supported_with_isolatedDeclarations_Add_an_explicit_declaration_for_the_properties_assigned_to_this_function,
-                                                ),
-                                            );
-                                        }
-                                    });
-                            }
-                            return typeInferenceFallback(node);
-                        }
-                        return transformExpressionToType(node.initializer, node.parent.flags & NodeFlags.Const ? InitializeTransformNarrowBehavior.KeepLiterals : InitializeTransformNarrowBehavior.None);
+        errorNameNode = node.name;
+        errorFallbackNode = node;
+        const result = transformInitializerToTypeNodeWorker(node, type);
+        errorNameNode = savedErrorNameNode;
+        errorFallbackNode = savedErrorFallbackNode;
+        referenceRequestingNode = savedReferenceRequestingNode;
+        return result;
+    }
+    function transformInitializerToTypeNodeWorker(node: HasInferredType | ExportAssignment, type: TypeNode | undefined): TypeNode {
+        if (isParameter(node)) {
+            const addUndefined = requiresImplicitUndefined(node);
+            if (addUndefined || (!type && !(node.initializer && isIdentifier(node.name)))) {
+                if(isolatedDeclarations) {
+                    const message = !addUndefined ? undefined:Diagnostics.Declaration_emit_for_this_parameter_requires_implicitly_adding_undefined_to_it_s_type_This_is_not_supported_with_isolatedDeclarations;
+                    reportIsolatedDeclarationError(node, createParameterError(node, message));
+                    if(isolatedDeclarationsNoFallback) {
+                        return makeInvalidType();
                     }
                 }
-                else {
-                    return typeInferenceFallback(node, createVariableOrPropertyError(node));
-                }
+                return typeInferenceFallbackFromDeclaration(node, addUndefined);
             }
-            else if (type) {
+            if (type) {
                 return visitNode(type, visitDeclarationSubtree, isTypeNode)!;
             }
-            else if (isPropertyDeclaration(node) || isPropertySignature(node)) {
-                if (node.initializer) {
-                    const optionalFlags = isOptionalDeclaration(node) ? InitializeTransformNarrowBehavior.NoTypeReferences | InitializeTransformNarrowBehavior.AddUndefined: InitializeTransformNarrowBehavior.None;
-                    const readonlyFlags = hasEffectiveReadonlyModifier(node)? InitializeTransformNarrowBehavior.KeepLiterals : InitializeTransformNarrowBehavior.None;
-                    return transformExpressionToType(node.initializer, optionalFlags | readonlyFlags);
-                }
-                else if (isInterfaceDeclaration(node.parent) || isTypeLiteralNode(node.parent)) {
-                    return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
+            if(node.initializer) {
+                return transformExpressionToType(node.initializer);
+            }
+            Debug.fail("If parameter does not have type or initializer it should fall back to inference above");
+        }
+        else if (isExportAssignment(node)) {
+            return transformExpressionToType(node.expression, InitializeTransformNarrowBehavior.KeepLiterals);
+        }
+        else if (isVariableDeclaration(node)) {
+            const firstDeclaration = node.symbol.valueDeclaration;
+            // Use first declaration of variable for the type
+            if (node !== firstDeclaration && firstDeclaration && isVariableDeclaration(firstDeclaration)) {
+                node = firstDeclaration;
+                type = type ?? firstDeclaration.type;
+            }
+            if (type) {
+                return visitNode(type, visitDeclarationSubtree, isTypeNode)!;
+            }
+            else if (node.initializer) {
+                if (isClassExpression(node.initializer)) {
+                    return typeInferenceFallback(node.initializer, createDiagnosticForNode(node.initializer, Diagnostics.Inference_from_class_expressions_is_not_supported_with_isolatedDeclarations));
                 }
                 else {
-                    return typeInferenceFallback(node, createVariableOrPropertyError(node));
+                    if (resolver.isExpandoFunction(node)) {
+                        if (isolatedDeclarations) {
+                            resolver.getPropertiesOfContainerFunction(node)
+                                .forEach(p => {
+                                    if (isExpandoPropertyDeclaration(p.valueDeclaration)) {
+                                        const errorTarget = isBinaryExpression(p.valueDeclaration) ?
+                                            p.valueDeclaration.left :
+                                            p.valueDeclaration;
+
+                                        reportIsolatedDeclarationError(
+                                            errorTarget,
+                                            createDiagnosticForNode(
+                                                errorTarget,
+                                                Diagnostics.Assigning_properties_to_functions_without_declaring_them_is_not_supported_with_isolatedDeclarations_Add_an_explicit_declaration_for_the_properties_assigned_to_this_function,
+                                            ),
+                                        );
+                                    }
+                                });
+                        }
+                        return typeInferenceFallback(node);
+                    }
+                    return transformExpressionToType(node.initializer, node.parent.flags & NodeFlags.Const ? InitializeTransformNarrowBehavior.KeepLiterals : InitializeTransformNarrowBehavior.None);
                 }
-            }
-            else if (isAccessor(node)) {
-                const allAccessors = resolver.getAllAccessorDeclarations(node)
-                const accessorType = getTypeAnnotationFromAllAccessorDeclarations(node, allAccessors);
-                return accessorType ?? typeInferenceFallback(node, createAccessorTypeError(allAccessors.getAccessor, allAccessors.setAccessor));
             }
             else {
-                if (isInterfaceDeclaration(node.parent) || isTypeLiteralNode(node.parent)) {
-                    return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
-                }
-                switch (node.kind) {
-                    case SyntaxKind.MethodDeclaration:
-                    case SyntaxKind.FunctionDeclaration:
-                        return typeInferenceFallback(node, createReturnTypeError(node));
+                return typeInferenceFallback(node, createVariableOrPropertyError(node));
+            }
+        }
+        else if (type) {
+            return visitNode(type, visitDeclarationSubtree, isTypeNode)!;
+        }
+        else if (isPropertyDeclaration(node) || isPropertySignature(node)) {
+            if (node.initializer) {
+                const optionalFlags = isOptionalDeclaration(node) ? InitializeTransformNarrowBehavior.NoTypeReferences | InitializeTransformNarrowBehavior.AddUndefined: InitializeTransformNarrowBehavior.None;
+                const readonlyFlags = hasEffectiveReadonlyModifier(node)? InitializeTransformNarrowBehavior.KeepLiterals : InitializeTransformNarrowBehavior.None;
+                return transformExpressionToType(node.initializer, optionalFlags | readonlyFlags);
+            }
+            else if (isInterfaceDeclaration(node.parent) || isTypeLiteralNode(node.parent)) {
+                return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
+            }
+            else {
+                return typeInferenceFallback(node, createVariableOrPropertyError(node));
+            }
+        }
+        else if (isAccessor(node)) {
+            const allAccessors = resolver.getAllAccessorDeclarations(node)
+            const accessorType = getTypeAnnotationFromAllAccessorDeclarations(node, allAccessors);
+            return accessorType ?? typeInferenceFallback(node, createAccessorTypeError(allAccessors.getAccessor, allAccessors.setAccessor));
+        }
+        else {
+            if (isInterfaceDeclaration(node.parent) || isTypeLiteralNode(node.parent)) {
+                return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
+            }
+            switch (node.kind) {
+                case SyntaxKind.MethodDeclaration:
+                case SyntaxKind.FunctionDeclaration:
+                    return typeInferenceFallback(node, createReturnTypeError(node));
 
-                    case SyntaxKind.BindingElement:
-                        const parentDeclaration = findNearestDeclaration(node);
-                        if (parentDeclaration && (isVariableDeclaration(parentDeclaration) || isParameter(parentDeclaration))) {
-                            return typeInferenceFallback(node, createBindingElementError(node));
-                        }
-                        else {
-                            return makeInvalidType();
-                        }
-                    default:
-                        return typeInferenceFallback(node, createDiagnosticForNode(node, Diagnostics.Expression_type_can_t_be_inferred_with_isolatedDeclarations));
-                }
+                case SyntaxKind.BindingElement:
+                    const parentDeclaration = findNearestDeclaration(node);
+                    if (parentDeclaration && (isVariableDeclaration(parentDeclaration) || isParameter(parentDeclaration))) {
+                        return typeInferenceFallback(node, createBindingElementError(node));
+                    }
+                    else {
+                        return makeInvalidType();
+                    }
+                default:
+                    return typeInferenceFallback(node, createDiagnosticForNode(node, Diagnostics.Expression_type_can_t_be_inferred_with_isolatedDeclarations));
             }
         }
     }
