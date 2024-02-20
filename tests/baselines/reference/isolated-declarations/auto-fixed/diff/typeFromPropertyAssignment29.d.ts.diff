@@ -1,4 +1,4 @@
-// [[Reason: Function declarations are not fixed]] ////
+// [[Reason: Cannot add property to class expressions]] ////
 
 //// [tests/cases/conformance/salsa/typeFromPropertyAssignment29.ts] ////
 

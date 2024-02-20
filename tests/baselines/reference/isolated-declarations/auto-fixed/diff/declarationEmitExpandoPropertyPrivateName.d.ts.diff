@@ -1,4 +1,4 @@
-// [[Reason: Function declarations are not fixed]] ////
+// [[Reason: Cannot name internal type]] ////
 
 //// [tests/cases/compiler/declarationEmitExpandoPropertyPrivateName.ts] ////
 

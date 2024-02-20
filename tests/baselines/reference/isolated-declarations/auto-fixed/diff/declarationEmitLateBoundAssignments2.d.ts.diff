@@ -1,4 +1,4 @@
-// [[Reason: Function declarations are not fixed]] ////
+// [[Reason: Cannot resolve non-static property names]] ////
 
 //// [tests/cases/compiler/declarationEmitLateBoundAssignments2.ts] ////
 

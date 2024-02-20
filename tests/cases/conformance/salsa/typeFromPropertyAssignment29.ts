@@ -1,5 +1,5 @@
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Function declarations are not fixed
+// @isolatedDeclarationFixedDiffReason: Cannot add property to class expressions
 function ExpandoDecl(n: number) {
     return n.toString();
 }
