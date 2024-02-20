@@ -1063,7 +1063,12 @@ export namespace Compiler {
         tsSources: readonly TestFile[],
         prettyErrors: boolean | undefined,
         reason: string | undefined,
+        expectNull?: boolean,
     ) {
+        if (expectNull) {
+          // eslint-disable-next-line no-null/no-null
+          return Baseline.runBaseline(type + "/" + baselinePath.replace(/\.tsx?/, `.d.ts.diff`), /*actual*/ null);
+        }
         const Diff = require("diff");
         const dteContent = declarationContent(dteDeclarationFiles, tsSources, dteDiagnostics, prettyErrors);
         const tscContent = declarationContent(tscDeclarationFiles, tsSources, tscDiagnostics, prettyErrors);
@@ -1122,17 +1127,21 @@ export namespace Compiler {
         errors: readonly ts.Diagnostic[],
         tsSources: readonly TestFile[],
         prettyErrors?: boolean,
+        expectNull?: boolean,
     ) {
-        let code = "";
-        code += "//// [" + header + "] ////\r\n\r\n";
+        if (expectNull) {
+          // eslint-disable-next-line no-null/no-null
+          return Baseline.runBaseline(type + "/" + baselinePath.replace(/\.tsx?/, `.d.ts`), /*actual*/ null);
+        }
+
+        let code = "//// [" + header + "] ////\r\n\r\n";
 
         code += sourceContent(tsSources);
 
         code += "\r\n\r\n/// [Declarations] ////\r\n\r\n";
         code += declarationContent(declarationFiles, tsSources, errors, prettyErrors);
 
-        // eslint-disable-next-line no-null/no-null
-        Baseline.runBaseline(type + "/" + baselinePath.replace(/\.tsx?/, `.d.ts`), code.length > 0 ? code : null);
+        Baseline.runBaseline(type + "/" + baselinePath.replace(/\.tsx?/, `.d.ts`), code);
     }
 
     export function doDeclarationMapBaseline(
@@ -1143,8 +1152,7 @@ export namespace Compiler {
         declarationMapFiles: readonly TestFile[],
         tsSources: readonly TestFile[],
     ) {
-        let code = "";
-        code += "//// [" + header + "] ////\r\n\r\n";
+        let code = "//// [" + header + "] ////\r\n\r\n";
 
         code += sourceContent(tsSources);
 
@@ -1153,8 +1161,7 @@ export namespace Compiler {
         code += "\r\n\r\n/// [Declarations Maps] ////\r\n\r\n";
         code += declarationSourceMapContent(declarationFiles, declarationMapFiles, tsSources);
 
-        // eslint-disable-next-line no-null/no-null
-        Baseline.runBaseline(type + "/" + baselinePath.replace(/\.tsx?/, `.d.ts.map`), code.length > 0 ? code : null);
+        Baseline.runBaseline(type + "/" + baselinePath.replace(/\.tsx?/, `.d.ts.map`), code);
     }
 
     export function doJsEmitBaseline(baselinePath: string, header: string, options: ts.CompilerOptions, result: compiler.CompilationResult, tsConfigFiles: readonly TestFile[], toBeCompiled: readonly TestFile[], otherFiles: readonly TestFile[], harnessSettings: TestCaseParser.CompilerSettings) {

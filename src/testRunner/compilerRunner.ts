@@ -615,7 +615,6 @@ class IsolatedDeclarationTest extends CompilerTestBase {
         return this.harnessSettings.isolatedDeclarationDiffReason;
     }
     verifyDteOutput() {
-        if (this.isOutputEquivalent && this.isDiagnosticEquivalent) return;
         Compiler.doDeclarationBaseline(
             this.configuredName,
             this.baselinePath + "/dte",
@@ -624,10 +623,10 @@ class IsolatedDeclarationTest extends CompilerTestBase {
             ts.concatenate(this.dteDiagnostics, this.tscNonIsolatedDeclarationsErrors),
             this.allFiles,
             this.options.pretty,
+            this.isOutputEquivalent && this.isDiagnosticEquivalent,
         );
     }
     verifyTscOutput() {
-        if (this.isOutputEquivalent && this.isDiagnosticEquivalent) return;
         Compiler.doDeclarationBaseline(
             this.configuredName,
             this.baselinePath + "/tsc",
@@ -636,6 +635,7 @@ class IsolatedDeclarationTest extends CompilerTestBase {
             ts.concatenate(this.tscIsolatedDeclarationsErrors, this.tscNonIsolatedDeclarationsErrors),
             this.allFiles,
             this.options.pretty,
+            this.isOutputEquivalent && this.isDiagnosticEquivalent,
         );
     }
     verifyDteMapOutput() {
@@ -672,9 +672,6 @@ class IsolatedDeclarationTest extends CompilerTestBase {
         }
     }
     verifyDiff() {
-        if (this.isOutputEquivalent && this.isDiagnosticEquivalent) {
-            return;
-        }
         Compiler.doDeclarationDiffBaseline(
             this.configuredName,
             this.baselinePath + "/diff",
@@ -686,6 +683,7 @@ class IsolatedDeclarationTest extends CompilerTestBase {
             this.allFiles,
             this.options.pretty,
             this.diffReason,
+            this.isOutputEquivalent && this.isDiagnosticEquivalent
         );
     }
 
