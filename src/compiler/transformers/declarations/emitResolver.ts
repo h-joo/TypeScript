@@ -448,7 +448,7 @@ export function createEmitDeclarationResolver(file: SourceFile, options: Compile
         ...notImplementedResolver,
         isUndefinedIdentifier(identifier) {
             // If we can't find a visible undefined symbol in the scope, it means undefined is referring to the global undefined
-            return identifier.escapedText === "undefined" && resolveName(identifier, identifier.escapedText, SymbolFlags.Value) === undefined
+            return identifier.escapedText === "undefined" && resolveName(identifier, identifier.escapedText, SymbolFlags.Value) === undefined;
         },
         isOptionalParameter,
         requiresAddingImplicitUndefined,
@@ -583,7 +583,7 @@ export function createEmitDeclarationResolver(file: SourceFile, options: Compile
             const moduleSpecifier = contextSpecifier.text;
             const resolvedFileName = resolveTripleslashReference(
                 pathIsRelative(moduleSpecifier) && !hasExtension(moduleSpecifier) ? moduleSpecifier + ".ts" : moduleSpecifier,
-                currentSourceFile.fileName
+                currentSourceFile.fileName,
             );
             return host.getSourceFile(resolvedFileName)?.symbol;
         },
