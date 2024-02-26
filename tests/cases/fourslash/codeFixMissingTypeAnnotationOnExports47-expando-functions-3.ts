@@ -15,8 +15,8 @@ verify.codeFix({
     newFileContent:
 `function foo(): void {}
 declare namespace foo {
-    var x: number;
-    var y: number;
+    export var x: number;
+    export var y: number;
 }
 foo.x = 1;
 foo.y = 1;`

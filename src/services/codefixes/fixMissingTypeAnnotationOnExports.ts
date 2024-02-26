@@ -261,8 +261,10 @@ function withChanges<T>(
       const newProperties = []
       for (const symbol of elements) {
         if (!isIdentifierText(symbol.name, program.getCompilerOptions().target)) continue;
+        // If there's an existing variable declaration for this property - skip.
+        if (symbol.valueDeclaration && isVariableDeclaration(symbol.valueDeclaration)) continue;
         newProperties.push(factory.createVariableStatement(
-          /*modifiers*/ undefined,
+          [factory.createModifier(SyntaxKind.ExportKeyword)],
           factory.createVariableDeclarationList(
             [factory.createVariableDeclaration(
               symbol.name,
