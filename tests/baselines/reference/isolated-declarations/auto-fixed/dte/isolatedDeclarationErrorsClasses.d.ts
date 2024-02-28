@@ -15,7 +15,7 @@ export class Cls {
     set setOnly(value: any) { }
 
     get getSetBad(): number { return 0 }
-    set getSetBad(value) { }
+    set getSetBad(value: number) { }
 
     get getSetOk(): number { return 0 }
     set getSetOk(value) { }
@@ -126,7 +126,7 @@ isolatedDeclarationErrorsClasses.ts(56,5): error TS7010: '[noAnnotationLiteralNa
         set setOnly(value: any) { }
     
         get getSetBad(): number { return 0 }
-        set getSetBad(value) { }
+        set getSetBad(value: number) { }
     
         get getSetOk(): number { return 0 }
         set getSetOk(value) { }

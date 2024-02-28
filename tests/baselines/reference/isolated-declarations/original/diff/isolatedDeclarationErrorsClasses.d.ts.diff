@@ -27,9 +27,9 @@
  }
  export {};
  
-@@ -42,21 +48,19 @@
- isolatedDeclarationErrorsClasses.ts(12,17): error TS9009: At least one accessor must have an explicit return type annotation with --isolatedDeclarations.
+@@ -43,21 +49,19 @@
  isolatedDeclarationErrorsClasses.ts(14,9): error TS9009: At least one accessor must have an explicit return type annotation with --isolatedDeclarations.
+ isolatedDeclarationErrorsClasses.ts(15,19): error TS9009: At least one accessor must have an explicit return type annotation with --isolatedDeclarations.
  isolatedDeclarationErrorsClasses.ts(36,5): error TS1166: A computed property name in a class property declaration must have a simple literal type or a 'unique symbol' type.
  isolatedDeclarationErrorsClasses.ts(36,6): error TS2304: Cannot find name 'missing'.
 -isolatedDeclarationErrorsClasses.ts(42,5): error TS9014: Computed properties must be number or string literals, variables or dotted expressions with --isolatedDeclarations.
@@ -46,13 +46,13 @@
  isolatedDeclarationErrorsClasses.ts(56,5): error TS7010: '[noAnnotationLiteralName]', which lacks return-type annotation, implicitly has an 'any' return type.
  
  
--==== isolatedDeclarationErrorsClasses.ts (22 errors) ====
-+==== isolatedDeclarationErrorsClasses.ts (20 errors) ====
+-==== isolatedDeclarationErrorsClasses.ts (23 errors) ====
++==== isolatedDeclarationErrorsClasses.ts (21 errors) ====
      export class Cls {
      
          field = 1 + 1;
-                 ~~~~~
-@@ -129,28 +133,26 @@
+         ~~~~~
+@@ -134,28 +138,26 @@
      
          [noParamAnnotationLiteralName](v: string): void { }
      

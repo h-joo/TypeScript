@@ -41,8 +41,8 @@ export declare const va2: invalid;
 //# sourceMappingURL=main.d.ts.map
 /// [Errors] ////
 
-main.ts(4,19): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
-main.ts(5,20): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+main.ts(4,14): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+main.ts(5,14): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 
 
 ==== main.ts (2 errors) ====
@@ -50,11 +50,11 @@ main.ts(5,20): error TS9010: Variable must have an explicit type annotation with
     import { fa as fa2 } from "ext/other";
     
     export const va = fa();
-                      ~~~~
+                 ~~
 !!! error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9027 main.ts:4:14: Add a type annotation to the variable va.
     export const va2 = fa2();
-                       ~~~~~
+                 ~~~
 !!! error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9027 main.ts:5:14: Add a type annotation to the variable va2.
     

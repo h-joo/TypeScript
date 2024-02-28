@@ -47409,7 +47409,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     }
 
     function declaredParameterTypeContainsUndefined(parameter: ParameterDeclaration) {
-        if(!parameter.type) return false;
+        if (!parameter.type) return false;
         const type = getTypeFromTypeNode(parameter.type);
         return type === undefinedType || !!(type.flags & TypeFlags.Union) && !!((type as UnionType).types[0].flags & TypeFlags.Undefined);
     }
@@ -47591,8 +47591,14 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         // Get type of the symbol if this is the valid symbol otherwise get type at location
         const symbol = getSymbolOfDeclaration(declaration);
         let type = symbol && !(symbol.flags & (SymbolFlags.TypeLiteral | SymbolFlags.Signature))
-            ? getWidenedType(getWidenedLiteralType(getTypeOfSymbol(symbol)))
+            ? getTypeOfSymbol(symbol)
             : errorType;
+        if (type.flags & TypeFlags.ObjectFlagsType) {
+            type = getWidenedType(type);
+        }
+        if (symbol && !isReadonlySymbol(symbol)) {
+            type = getWidenedLiteralType(type);
+        }
         if (
             type.flags & TypeFlags.UniqueESSymbol &&
             type.symbol === symbol

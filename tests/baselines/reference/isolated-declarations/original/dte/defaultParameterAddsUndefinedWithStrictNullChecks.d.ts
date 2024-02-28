@@ -83,7 +83,7 @@ declare function removeNothing(y?: invalid): invalid;
 
 defaultParameterAddsUndefinedWithStrictNullChecks.ts(1,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
 defaultParameterAddsUndefinedWithStrictNullChecks.ts(4,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
-defaultParameterAddsUndefinedWithStrictNullChecks.ts(7,13): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
+defaultParameterAddsUndefinedWithStrictNullChecks.ts(7,5): error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 defaultParameterAddsUndefinedWithStrictNullChecks.ts(10,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
 defaultParameterAddsUndefinedWithStrictNullChecks.ts(14,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
 defaultParameterAddsUndefinedWithStrictNullChecks.ts(18,10): error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations.
@@ -108,7 +108,7 @@ defaultParameterAddsUndefinedWithStrictNullChecks.ts(51,28): error TS9011: Param
         return addUndefined.length + addDefined;
     }
     let total = f() + f('a', 1) + f('b') + f(undefined, 2);
-                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~
 !!! error TS9010: Variable must have an explicit type annotation with --isolatedDeclarations.
 !!! related TS9027 defaultParameterAddsUndefinedWithStrictNullChecks.ts:7:5: Add a type annotation to the variable total.
     total = g('c', 3) + g(undefined, 4);

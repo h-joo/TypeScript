@@ -207,7 +207,6 @@ import {
     HasExpressionInitializer,
     hasExtension,
     HasFlowNode,
-    HasInferredType,
     HasInitializer,
     hasInitializer,
     HasJSDoc,
@@ -11126,14 +11125,15 @@ export function createEntityVisibilityChecker({ isDeclarationVisible, isThisAcce
             return { accessibility: SymbolAccessibility.Accessible };
         }
 
-        if(symbol
+        if (
+            symbol
             && (isFunctionExpressionOrArrowFunction(enclosingDeclaration) || isMethodDeclaration(enclosingDeclaration))
             && symbol.flags & SymbolFlags.FunctionScopedVariable
-            && symbol.valueDeclaration) {
-            const parameter = 
-                symbol.valueDeclaration.kind === SyntaxKind.Parameter? symbol.valueDeclaration:
+            && symbol.valueDeclaration
+        ) {
+            const parameter = symbol.valueDeclaration.kind === SyntaxKind.Parameter ? symbol.valueDeclaration :
                 findAncestor(symbol.valueDeclaration, n => n.kind === SyntaxKind.Parameter || enclosingDeclaration === n);
-            if(parameter?.parent === enclosingDeclaration) {
+            if (parameter?.parent === enclosingDeclaration) {
                 return { accessibility: SymbolAccessibility.Accessible };
             }
         }
@@ -11156,14 +11156,14 @@ export function createEntityVisibilityChecker({ isDeclarationVisible, isThisAcce
 /** @internal */
 export function isPrimitiveLiteralValue(node: Expression, includeBigInt = true): node is PrimitiveLiteral {
     Debug.type<PrimitiveLiteral>(node);
-    switch(node.kind) {
-        case SyntaxKind.TrueKeyword: 
-        case SyntaxKind.FalseKeyword: 
-        case SyntaxKind.NumericLiteral: 
-        case SyntaxKind.StringLiteral: 
-        case SyntaxKind.NoSubstitutionTemplateLiteral: 
-            return true
-        case SyntaxKind.BigIntLiteral: 
+    switch (node.kind) {
+        case SyntaxKind.TrueKeyword:
+        case SyntaxKind.FalseKeyword:
+        case SyntaxKind.NumericLiteral:
+        case SyntaxKind.StringLiteral:
+        case SyntaxKind.NoSubstitutionTemplateLiteral:
+            return true;
+        case SyntaxKind.BigIntLiteral:
             return includeBigInt;
         case SyntaxKind.PrefixUnaryExpression:
             if (node.operator === SyntaxKind.MinusToken) {
@@ -11179,32 +11179,31 @@ export function isPrimitiveLiteralValue(node: Expression, includeBigInt = true):
     }
 }
 
-/** 
- * @internal 
- * 
+/**
+ * @internal
+ *
  * Clone literal value while normalizing it (converts octals/hex to base 10, uses double quotes strings)
- * 
  */
 export function clonePrimitiveLiteralValue<T extends PrimitiveLiteral>(node: T): T;
 export function clonePrimitiveLiteralValue(node: PrimitiveLiteral): PrimitiveLiteral {
-    switch(node.kind) {
-        case SyntaxKind.NumericLiteral: 
+    switch (node.kind) {
+        case SyntaxKind.NumericLiteral:
             return factory.createNumericLiteral(node.text);
-        case SyntaxKind.BigIntLiteral: 
+        case SyntaxKind.BigIntLiteral:
             return factory.createBigIntLiteral({ negative: false, base10Value: parsePseudoBigInt(node.text) });
-        case SyntaxKind.StringLiteral: 
-        case SyntaxKind.NoSubstitutionTemplateLiteral: 
+        case SyntaxKind.StringLiteral:
+        case SyntaxKind.NoSubstitutionTemplateLiteral:
             return factory.createStringLiteral(node.text);
-        case SyntaxKind.FalseKeyword: 
+        case SyntaxKind.FalseKeyword:
             return factory.createFalse();
-        case SyntaxKind.TrueKeyword: 
+        case SyntaxKind.TrueKeyword:
             return factory.createTrue();
         case SyntaxKind.PrefixUnaryExpression:
             Debug.assert(isNumericLiteral(node.operand) || isBigIntLiteral(node.operand));
-            if(node.operator === SyntaxKind.PlusToken) {
+            if (node.operator === SyntaxKind.PlusToken) {
                 return clonePrimitiveLiteralValue(node.operand);
             }
-            else if(node.operator === SyntaxKind.MinusToken){
+            else if (node.operator === SyntaxKind.MinusToken) {
                 return factory.createPrefixUnaryExpression(
                     node.operator,
                     clonePrimitiveLiteralValue(node.operand),
@@ -11217,33 +11216,6 @@ export function clonePrimitiveLiteralValue(node: PrimitiveLiteral): PrimitiveLit
     }
 }
 
-/**
- * @internal
- */
-export function hasInferredType(node: Node): node is HasInferredType {
-    Debug.type<HasInferredType>(node);
-    switch (node.kind) {
-        case SyntaxKind.FunctionDeclaration:
-        case SyntaxKind.MethodDeclaration:
-        case SyntaxKind.GetAccessor:
-        case SyntaxKind.SetAccessor:
-        case SyntaxKind.BindingElement:
-        case SyntaxKind.ConstructSignature:
-        case SyntaxKind.VariableDeclaration:
-        case SyntaxKind.MethodSignature:
-        case SyntaxKind.CallSignature:
-        case SyntaxKind.ArrowFunction:
-        case SyntaxKind.FunctionExpression:
-        case SyntaxKind.Parameter:
-        case SyntaxKind.PropertyDeclaration:
-        case SyntaxKind.PropertySignature:
-        case SyntaxKind.PropertyAssignment:
-            return true;
-        default:
-            assertType<never>(node);
-            return false;
-    }
-}
 /** @internal */
 export function isConstAssertion(location: Node) {
     return (isAssertionExpression(location) && isConstTypeReference(location.type))

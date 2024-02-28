@@ -32,6 +32,7 @@ import {
     getSynthesizedDeepClone,
     getTokenAtPosition,
     getTrailingCommentRanges,
+    hasInitializer,
     hasSyntacticModifier,
     Identifier,
     isArrayBindingPattern,
@@ -485,6 +486,9 @@ function withChanges<T>(
         }
         while (node.parent.pos === node.pos && node.parent.end === node.end) {
             node = node.parent;
+        }
+        if (isIdentifier(node) && hasInitializer(node.parent) && node.parent.initializer) {
+            return node.parent.initializer;
         }
         return node;
     }

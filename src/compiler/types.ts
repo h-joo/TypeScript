@@ -1389,9 +1389,6 @@ export type HasInferredType =
     | FunctionDeclaration
     | MethodDeclaration
     | GetAccessorDeclaration
-    | SetAccessorDeclaration
-    | FunctionExpression
-    | ArrowFunction
     | BindingElement
     | ConstructSignatureDeclaration
     | VariableDeclaration
@@ -1399,11 +1396,9 @@ export type HasInferredType =
     | CallSignatureDeclaration
     | ParameterDeclaration
     | PropertyDeclaration
-    | PropertySignature
-    | PropertyAssignment;
-
+    | PropertySignature;
 /** @internal */
-export type PrimitiveLiteral = 
+export type PrimitiveLiteral =
     | BooleanLiteral
     | NumericLiteral
     | StringLiteral

@@ -11,6 +11,7 @@ import {
     DiagnosticMessage,
     Diagnostics,
     ElementAccessExpression,
+    ExportAssignment,
     ExpressionWithTypeArguments,
     FunctionDeclaration,
     FunctionExpression,
@@ -26,6 +27,7 @@ import {
     isConstructorDeclaration,
     isConstructSignatureDeclaration,
     isElementAccessExpression,
+    isExportAssignment,
     isExpressionWithTypeArguments,
     isFunctionDeclaration,
     isFunctionExpressionOrArrowFunction,
@@ -108,7 +110,8 @@ export type DeclarationDiagnosticProducing =
     | BinaryExpression
     | JSDocTypedefTag
     | JSDocCallbackTag
-    | JSDocEnumTag;
+    | JSDocEnumTag
+    | ExportAssignment;
 
 /** @internal */
 export function canProduceDiagnostics(node: Node): node is DeclarationDiagnosticProducing {
@@ -239,8 +242,17 @@ export function createGetSymbolAccessibilityDiagnosticForNode(node: DeclarationD
     else if (isTypeAliasDeclaration(node) || isJSDocTypeAlias(node)) {
         return getTypeAliasDeclarationVisibilityError;
     }
+    else if (isExportAssignment(node)) {
+        return getExportAssignmentTypeVisibilityDiagnosticMessage;
+    }
     else {
         return Debug.assertNever(node, `Attempted to set a declaration diagnostic context for unhandled node kind: ${Debug.formatSyntaxKind((node as Node).kind)}`);
+    }
+    function getExportAssignmentTypeVisibilityDiagnosticMessage() {
+        return {
+            diagnosticMessage: Diagnostics.Default_export_of_the_module_has_or_is_using_private_name_0,
+            errorNode: node,
+        };
     }
 
     function getVariableDeclarationTypeVisibilityDiagnosticMessage(symbolAccessibilityResult: SymbolAccessibilityResult) {
