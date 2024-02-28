@@ -7,6 +7,9 @@ export function f(): I { return null as I; }
 import {f} from "./a";
 
 export function q(): void {}
+export declare namespace q {
+    var val: I;
+}
 q.val = f();
 
 
@@ -22,17 +25,23 @@ export {};
 //# sourceMappingURL=a.d.ts.map
 /// [Errors] ////
 
-b.ts(4,1): error TS4032: Property 'val' of exported interface has or is using name 'I' from private module '"a"'.
+b.ts(5,14): error TS2304: Cannot find name 'I'.
+b.ts(5,14): error TS4025: Exported variable 'val' has or is using private name 'I'.
 
 
 ==== a.ts (0 errors) ====
     interface I {}
     export function f(): I { return null as I; }
-==== b.ts (1 errors) ====
+==== b.ts (2 errors) ====
     import {f} from "./a";
     
     export function q(): void {}
+    export declare namespace q {
+        var val: I;
+                 ~
+!!! error TS2304: Cannot find name 'I'.
+                 ~
+!!! error TS4025: Exported variable 'val' has or is using private name 'I'.
+    }
     q.val = f();
-    ~~~~~
-!!! error TS4032: Property 'val' of exported interface has or is using name 'I' from private module '"a"'.
     

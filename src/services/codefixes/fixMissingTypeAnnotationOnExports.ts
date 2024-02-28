@@ -26,6 +26,7 @@ import {
     factory,
     FileTextChanges,
     findAncestor,
+    FunctionDeclaration,
     GeneratedIdentifierFlags,
     getEmitScriptTarget,
     getSourceFileOfNode,
@@ -48,6 +49,7 @@ import {
     isEnumMember,
     isExpandoPropertyDeclaration,
     isExpression,
+    isFunctionDeclaration,
     isFunctionExpressionOrArrowFunction,
     isHeritageClause,
     isIdentifier,
@@ -69,6 +71,7 @@ import {
     isValueSignatureDeclaration,
     isVariableDeclaration,
     ModifierFlags,
+    ModifierLike,
     Node,
     NodeArray,
     NodeBuilderFlags,
@@ -224,6 +227,7 @@ function withChanges<T>(
     const scriptTarget = getEmitScriptTarget(program.getCompilerOptions());
     const importAdder = createImportAdder(context.sourceFile, context.program, context.preferences, context.host);
     const fixedNodes = new Set<Node>();
+    const expandoPropertiesAdded = new Set<Node>();
 
     const result = cb({ addFullAnnotation, addInlineAnnotation, extractAsVariable });
     importAdder.writeFixes(changeTracker);
@@ -234,16 +238,63 @@ function withChanges<T>(
 
     function addFullAnnotation(span: TextSpan) {
         const nodeWithDiag = getTokenAtPosition(sourceFile, span.start);
-        const nodeWithNoType = findNearestParentWithTypeAnnotation(nodeWithDiag) ?? findExpandoFunction(nodeWithDiag);
+        const expandoFunction = findExpandoFunction(nodeWithDiag);
+        if (expandoFunction) {
+          if (isFunctionDeclaration(expandoFunction)) {
+            return createNamespaceForExpandoProperties(expandoFunction);
+          }
+          return fixupForIsolatedDeclarations(expandoFunction);
+        }
+        const nodeWithNoType = findNearestParentWithTypeAnnotation(nodeWithDiag)
         if (nodeWithNoType) {
             return fixupForIsolatedDeclarations(nodeWithNoType);
         }
         return undefined;
     }
 
+    function createNamespaceForExpandoProperties(expandoFunc: FunctionDeclaration): DiagnosticOrDiagnosticAndArguments|undefined {
+      if (expandoPropertiesAdded?.has(expandoFunc)) return undefined;
+      expandoPropertiesAdded?.add(expandoFunc);
+      const type = typeChecker.getTypeAtLocation(expandoFunc);
+      const elements = typeChecker.getPropertiesOfType(type);
+      if (!expandoFunc.name || elements.length === 0) return undefined;
+      const newProperties = []
+      for (const symbol of elements) {
+        if (!isIdentifierText(symbol.name, program.getCompilerOptions().target)) continue;
+        // If there's an existing variable declaration for this property - skip.
+        if (symbol.valueDeclaration && isVariableDeclaration(symbol.valueDeclaration)) continue;
+        newProperties.push(factory.createVariableStatement(
+          [factory.createModifier(SyntaxKind.ExportKeyword)],
+          factory.createVariableDeclarationList(
+            [factory.createVariableDeclaration(
+              symbol.name,
+              /*exclamationToken*/ undefined,
+              typeToTypeNode(typeChecker.getTypeOfSymbol(symbol), expandoFunc),
+              /*initializer*/ undefined,
+              )],
+          )
+        ));
+      }
+      if (newProperties.length === 0) return undefined;
+      const modifiers: ModifierLike[] = [];
+      if (expandoFunc.modifiers?.some((modifier)=> modifier.kind === SyntaxKind.ExportKeyword)) {
+        modifiers.push(factory.createModifier(SyntaxKind.ExportKeyword))
+      }
+      modifiers.push(factory.createModifier(SyntaxKind.DeclareKeyword));
+      const namespace = factory.createModuleDeclaration(
+        modifiers,
+        expandoFunc.name,
+        factory.createModuleBlock(newProperties),
+        /*flags*/ NodeFlags.Namespace | NodeFlags.ExportContext | NodeFlags.Ambient | NodeFlags.ContextFlags,
+      );
+      changeTracker.insertNodeAfter(sourceFile, expandoFunc, namespace);
+      return [Diagnostics.Annotate_types_of_properties_expando_function_in_a_namespace];
+    }
+
     function needsParenthesizedExpressionForAssertion(node: Expression) {
         return !isEntityNameExpression(node) && !isCallExpression(node) && !isObjectLiteralExpression(node) && !isArrayLiteralExpression(node);
     }
+
     function createAsExpression(node: Expression, type: TypeNode) {
         if (needsParenthesizedExpressionForAssertion(node)) {
             node = factory.createParenthesizedExpression(node);
@@ -290,7 +341,7 @@ function withChanges<T>(
         // We can't use typeof un an unique symbol. Would result in either
         // const s = Symbol("") as unique symbol
         // const s = Symbol("") as typeof s
-        // both of which are not cirrect
+        // both of which are not correct
         if (type && type.flags & TypeFlags.UniqueESSymbol) {
             return undefined;
         }
@@ -515,8 +566,13 @@ function withChanges<T>(
             const properties = typeChecker.getPropertiesOfType(targetType);
             if (some(properties, p => p.valueDeclaration === expandoDeclaration || p.valueDeclaration === expandoDeclaration.parent)) {
                 const fn = targetType.symbol.valueDeclaration;
-                if (fn && isFunctionExpressionOrArrowFunction(fn) && isVariableDeclaration(fn.parent)) {
+                if (fn) {
+                  if (isFunctionExpressionOrArrowFunction(fn) && isVariableDeclaration(fn.parent)) {
                     return fn.parent;
+                  }
+                  if (isFunctionDeclaration(fn)) {
+                    return fn;
+                  }
                 }
             }
         }

@@ -1,6 +1,5 @@
 // @strict: true
 // @declaration: true
-// @isolatedDeclarationFixedDiffReason: Function declarations are not fixed
 
 // https://github.com/microsoft/TypeScript/issues/56538
 

@@ -2,7 +2,6 @@
 // @isolatedDeclarations: true
 // @declarationMap: false
 // @target: ESNext
-// @isolatedDeclarationFixedDiffReason: Function declarations are not fixed
 
 export function foo() {}
 
