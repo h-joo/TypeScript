@@ -10,9 +10,15 @@ const withWhitespace = "foo bar"
 const emoji = "🤷‍♂️"
 
 export function decl(): void {}
+export declare namespace decl {
+    var B: string
+}
 decl["B"] = 'foo'
 
 export function decl2(): void {}
+export declare namespace decl2 {
+    var C: number
+}
 decl2[c] = 0
 
 export function decl3(): void {}
@@ -107,10 +113,13 @@ arrow10[emoji] = 0
 //// [declarationEmitLateBoundAssignments2.d.ts]
 export declare function decl(): void;
 export declare namespace decl {
-    var B: invalid;
+    var B: string;
 }
 export declare function decl2(): void;
 export declare namespace decl2 { }
+export declare namespace decl2 {
+    var C: number;
+}
 export declare function decl3(): void;
 export declare namespace decl3 { }
 export declare function decl4(): void;
@@ -170,9 +179,8 @@ export declare const arrow10: {
 //# sourceMappingURL=declarationEmitLateBoundAssignments2.d.ts.map
 /// [Errors] ////
 
-declarationEmitLateBoundAssignments2.ts(10,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
-declarationEmitLateBoundAssignments2.ts(13,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
-declarationEmitLateBoundAssignments2.ts(16,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
+declarationEmitLateBoundAssignments2.ts(17,9): error TS2733: Property 'C' was also declared here.
+declarationEmitLateBoundAssignments2.ts(19,1): error TS2718: Duplicate property 'C'.
 declarationEmitLateBoundAssignments2.ts(19,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
 declarationEmitLateBoundAssignments2.ts(22,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
 declarationEmitLateBoundAssignments2.ts(25,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
@@ -180,9 +188,11 @@ declarationEmitLateBoundAssignments2.ts(28,1): error TS9023: Assigning propertie
 declarationEmitLateBoundAssignments2.ts(31,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
 declarationEmitLateBoundAssignments2.ts(34,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
 declarationEmitLateBoundAssignments2.ts(37,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
+declarationEmitLateBoundAssignments2.ts(40,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
+declarationEmitLateBoundAssignments2.ts(43,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
 
 
-==== declarationEmitLateBoundAssignments2.ts (10 errors) ====
+==== declarationEmitLateBoundAssignments2.ts (11 errors) ====
     // https://github.com/microsoft/TypeScript/issues/54811
     
     const c = "C"
@@ -192,12 +202,20 @@ declarationEmitLateBoundAssignments2.ts(37,1): error TS9023: Assigning propertie
     const emoji = "🤷‍♂️"
     
     export function decl(): void {}
+    export declare namespace decl {
+        var B: string
+    }
     decl["B"] = 'foo'
-    ~~~~~~~~~
-!!! error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
     
     export function decl2(): void {}
+    export declare namespace decl2 {
+        var C: number
+            ~
+!!! error TS2733: Property 'C' was also declared here.
+    }
     decl2[c] = 0
+    ~~~~~~~~
+!!! error TS2718: Duplicate property 'C'.
     ~~~~~~~~
 !!! error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
     

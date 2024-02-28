@@ -1,5 +1,4 @@
 // @lib: esnext
-// @isolatedDeclarationFixedDiffReason: Function declarations are not fixed
 // @declaration: true
 
 function Foo(): void {

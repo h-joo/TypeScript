@@ -4,6 +4,9 @@
 export function foo(): void {
 
 }
+export declare namespace foo {
+    var b: string;
+}
 
 const o = {
     ["prop.inner"]: "a",
@@ -53,12 +56,19 @@ export {};
 //# sourceMappingURL=isolatedDeclarationLazySymbols.d.ts.map
 /// [Errors] ////
 
-isolatedDeclarationLazySymbols.ts(16,5): error TS1166: A computed property name in a class property declaration must have a simple literal type or a 'unique symbol' type.
+isolatedDeclarationLazySymbols.ts(5,9): error TS2733: Property 'b' was also declared here.
+isolatedDeclarationLazySymbols.ts(16,1): error TS2718: Duplicate property 'b'.
+isolatedDeclarationLazySymbols.ts(19,5): error TS1166: A computed property name in a class property declaration must have a simple literal type or a 'unique symbol' type.
 
 
-==== isolatedDeclarationLazySymbols.ts (1 errors) ====
+==== isolatedDeclarationLazySymbols.ts (3 errors) ====
     export function foo(): void {
     
+    }
+    export declare namespace foo {
+        var b: string;
+            ~
+!!! error TS2733: Property 'b' was also declared here.
     }
     
     const o = {
@@ -70,6 +80,8 @@ isolatedDeclarationLazySymbols.ts(16,5): error TS1166: A computed property name 
     
     foo[o["prop.inner"]] ="A";
     foo[o.prop.inner] = "B";
+    ~~~~~~~~~~~~~~~~~
+!!! error TS2718: Duplicate property 'b'.
     
     export class Foo {
         [o["prop.inner"]] ="A"

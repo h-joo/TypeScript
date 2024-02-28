@@ -1,6 +1,5 @@
 // @declaration: true
 // @isolatedDeclarations: true
-// @isolatedDeclarationFixedDiffReason: Function declarations are not fixed
 // @target: ESNext
 
 function errorOnAssignmentBelowDecl(): void {}

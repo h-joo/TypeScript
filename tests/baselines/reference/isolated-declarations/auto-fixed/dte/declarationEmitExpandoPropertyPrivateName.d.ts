@@ -7,6 +7,9 @@ export function f(): I { return null as I; }
 import {f} from "./a";
 
 export function q(): void {}
+export declare namespace q {
+    var val: I;
+}
 q.val = f();
 
 
@@ -23,13 +26,13 @@ export {};
 //// [b.d.ts]
 export declare function q(): void;
 export declare namespace q {
-    var val: invalid;
+    var val: I;
 }
 //# sourceMappingURL=b.d.ts.map
 /// [Errors] ////
 
-b.ts(4,1): error TS4032: Property 'val' of exported interface has or is using name 'I' from private module '"a"'.
-b.ts(4,1): error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
+b.ts(5,14): error TS2304: Cannot find name 'I'.
+b.ts(5,14): error TS4025: Exported variable 'val' has or is using private name 'I'.
 
 
 ==== a.ts (0 errors) ====
@@ -39,9 +42,12 @@ b.ts(4,1): error TS9023: Assigning properties to functions without declaring the
     import {f} from "./a";
     
     export function q(): void {}
+    export declare namespace q {
+        var val: I;
+                 ~
+!!! error TS2304: Cannot find name 'I'.
+                 ~
+!!! error TS4025: Exported variable 'val' has or is using private name 'I'.
+    }
     q.val = f();
-    ~~~~~
-!!! error TS4032: Property 'val' of exported interface has or is using name 'I' from private module '"a"'.
-    ~~~~~
-!!! error TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.
     
