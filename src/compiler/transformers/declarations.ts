@@ -91,7 +91,6 @@ import {
     hasEffectiveModifier,
     hasEffectiveReadonlyModifier,
     hasExtension,
-    HasInferredType,
     hasJSDocNodes,
     HasModifiers,
     hasSyntacticModifier,
@@ -818,7 +817,21 @@ export function transformDeclarations(context: TransformationContext) {
         return factory.createTypeReferenceNode("invalid");
     }
 
-    function ensureType(node: HasInferredType | ExportAssignment, type: TypeNode | undefined, ignorePrivate?: boolean): TypeNode | undefined {
+    type HasInferredType =
+        | FunctionDeclaration
+        | MethodDeclaration
+        | GetAccessorDeclaration
+        | BindingElement
+        | ConstructSignatureDeclaration
+        | VariableDeclaration
+        | MethodSignature
+        | CallSignatureDeclaration
+        | ParameterDeclaration
+        | PropertyDeclaration
+        | PropertySignature
+        | ExportAssignment;
+
+    function ensureType(node: HasInferredType, type: TypeNode | undefined, ignorePrivate?: boolean): TypeNode | undefined {
         if (!ignorePrivate && hasEffectiveModifier(node, ModifierFlags.Private)) {
             // Private nodes emit no types (except private parameter properties, whose parameter types are actually visible)
             return;
@@ -926,10 +939,10 @@ export function transformDeclarations(context: TransformationContext) {
             }
             return diag;
         }
-        function transformExpressionToTypeNode(node: Expression, inferenceFlags: InitializeTransformNarrowBehavior = InitializeTransformNarrowBehavior.None): TypeNode | undefined {
+        function typeFromExpression(node: Expression, inferenceFlags: InitializeTransformNarrowBehavior = InitializeTransformNarrowBehavior.None): TypeNode | undefined {
             switch (node.kind) {
                 case SyntaxKind.ParenthesizedExpression:
-                    return transformExpressionToTypeNode((node as ParenthesizedExpression).expression, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
+                    return typeFromExpression((node as ParenthesizedExpression).expression, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals);
                 case SyntaxKind.Identifier:
                     if (resolver.isUndefinedIdentifier(node as Identifier)) {
                         return createUndefinedTypeNode();
@@ -944,12 +957,12 @@ export function transformDeclarations(context: TransformationContext) {
                     }
                 case SyntaxKind.ArrowFunction:
                 case SyntaxKind.FunctionExpression:
-                    return transformFunctionExpressionOrArrowFunction(node as ArrowFunction | FunctionExpression);
+                    return typeFromFunctionExpressionLike(node as ArrowFunction | FunctionExpression);
                 case SyntaxKind.TypeAssertionExpression:
                 case SyntaxKind.AsExpression:
                     const asExpression = node as AsExpression | TypeAssertion;
                     if (isTypeReferenceNode(asExpression.type) && isConstTypeReference(asExpression.type)) {
-                        return transformExpressionToTypeNode(asExpression.expression, InitializeTransformNarrowBehavior.AsConst);
+                        return typeFromExpression(asExpression.expression, InitializeTransformNarrowBehavior.AsConst);
                     }
                     else {
                         const type = asExpression.type;
@@ -962,15 +975,15 @@ export function transformDeclarations(context: TransformationContext) {
                     const unaryExpression = node as PrefixUnaryExpression;
                     if (isPrimitiveLiteralValue(unaryExpression)) {
                         if (unaryExpression.operand.kind === SyntaxKind.BigIntLiteral) {
-                            return transformPrimitiveLiteralToType(unaryExpression, SyntaxKind.BigIntKeyword, inferenceFlags);
+                            return typeFromPrimitiveLiteral(unaryExpression, SyntaxKind.BigIntKeyword, inferenceFlags);
                         }
                         if (unaryExpression.operand.kind === SyntaxKind.NumericLiteral) {
-                            return transformPrimitiveLiteralToType(unaryExpression, SyntaxKind.NumberKeyword, inferenceFlags);
+                            return typeFromPrimitiveLiteral(unaryExpression, SyntaxKind.NumberKeyword, inferenceFlags);
                         }
                     }
                     break;
                 case SyntaxKind.NumericLiteral:
-                    return transformPrimitiveLiteralToType(node as NumericLiteral, SyntaxKind.NumberKeyword, inferenceFlags);
+                    return typeFromPrimitiveLiteral(node as NumericLiteral, SyntaxKind.NumberKeyword, inferenceFlags);
                 case SyntaxKind.TemplateExpression:
                     if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConstOrKeepLiterals)) {
                         return factory.createKeywordTypeNode(SyntaxKind.StringKeyword);
@@ -978,16 +991,16 @@ export function transformDeclarations(context: TransformationContext) {
                     break;
                 case SyntaxKind.NoSubstitutionTemplateLiteral:
                 case SyntaxKind.StringLiteral:
-                    return transformPrimitiveLiteralToType(node as StringLiteral | NoSubstitutionTemplateLiteral, SyntaxKind.StringKeyword, inferenceFlags);
+                    return typeFromPrimitiveLiteral(node as StringLiteral | NoSubstitutionTemplateLiteral, SyntaxKind.StringKeyword, inferenceFlags);
                 case SyntaxKind.BigIntLiteral:
-                    return transformPrimitiveLiteralToType(node as BigIntLiteral, SyntaxKind.BigIntKeyword, inferenceFlags);
+                    return typeFromPrimitiveLiteral(node as BigIntLiteral, SyntaxKind.BigIntKeyword, inferenceFlags);
                 case SyntaxKind.TrueKeyword:
                 case SyntaxKind.FalseKeyword:
-                    return transformPrimitiveLiteralToType(node as TrueLiteral | FalseLiteral, SyntaxKind.BooleanKeyword, inferenceFlags);
+                    return typeFromPrimitiveLiteral(node as TrueLiteral | FalseLiteral, SyntaxKind.BooleanKeyword, inferenceFlags);
                 case SyntaxKind.ArrayLiteralExpression:
-                    return transformArrayLiteralToType(node as ArrayLiteralExpression, inferenceFlags);
+                    return typeFromArrayLiteral(node as ArrayLiteralExpression, inferenceFlags);
                 case SyntaxKind.ObjectLiteralExpression:
-                    return transformObjectLiteralExpressionToType(node as ObjectLiteralExpression, inferenceFlags);
+                    return typeFromObjectLiteral(node as ObjectLiteralExpression, inferenceFlags);
             }
             return undefined;
         }
@@ -1035,13 +1048,13 @@ export function transformDeclarations(context: TransformationContext) {
             }
             switch (node.kind) {
                 case SyntaxKind.Parameter:
-                    typeNode = transformParameterInitializerToTypeNode(node, type);
+                    typeNode = typeFromParameter(node, type);
                     break;
                 case SyntaxKind.VariableDeclaration:
-                    typeNode = transformVariableInitializerToTypeNode(node, type);
+                    typeNode = typeFromVariable(node, type);
                     break;
                 case SyntaxKind.PropertyDeclaration:
-                    typeNode = transformPropertyToTypeNode(node, type);
+                    typeNode = typeFromProperty(node, type);
                     break;
                 case SyntaxKind.GetAccessor:
                     const allAccessors = resolver.getAllAccessorDeclarations(node);
@@ -1077,7 +1090,7 @@ export function transformDeclarations(context: TransformationContext) {
                     }
                     break;
                 case SyntaxKind.ExportAssignment:
-                    typeNode = transformExpressionToTypeNode(node.expression, InitializeTransformNarrowBehavior.KeepLiterals) ?? typeInferenceForExpression(node.expression, createExpressionError);
+                    typeNode = typeFromExpression(node.expression, InitializeTransformNarrowBehavior.KeepLiterals) ?? typeInferenceForExpression(node.expression, createExpressionError);
                     break;
                 default:
                     Debug.assertNever(node, `Node needs to be an inferrable type found ${Debug.formatSyntaxKind((node as Node).kind)}`);
@@ -1090,7 +1103,7 @@ export function transformDeclarations(context: TransformationContext) {
             }
             return typeNode;
         }
-        function transformFunctionExpressionOrArrowFunction(fnNode: FunctionExpression | ArrowFunction) {
+        function typeFromFunctionExpressionLike(fnNode: FunctionExpression | ArrowFunction) {
             const oldEnclosingDeclaration = enclosingDeclaration;
             enclosingDeclaration = fnNode;
 
@@ -1112,7 +1125,7 @@ export function transformDeclarations(context: TransformationContext) {
             }
             return true;
         }
-        function transformArrayLiteralToType(arrayLiteral: ArrayLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
+        function typeFromArrayLiteral(arrayLiteral: ArrayLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
             if (!(inferenceFlags & InitializeTransformNarrowBehavior.AsConst)) {
                 return typeInferenceForExpression(arrayLiteral, createArrayLiteralError);
             }
@@ -1128,7 +1141,7 @@ export function transformDeclarations(context: TransformationContext) {
                     );
                 }
                 else {
-                    const elementType = transformExpressionToTypeNode(element, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals) ?? typeInferenceForExpression(element, createExpressionError);
+                    const elementType = typeFromExpression(element, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals) ?? typeInferenceForExpression(element, createExpressionError);
                     elementTypesInfo.push(elementType);
                 }
             }
@@ -1165,7 +1178,7 @@ export function transformDeclarations(context: TransformationContext) {
             }
             return result;
         }
-        function transformObjectLiteralExpressionToType(objectLiteral: ObjectLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
+        function typeFromObjectLiteral(objectLiteral: ObjectLiteralExpression, inferenceFlags: InitializeTransformNarrowBehavior) {
             if (!canGetTypeFromObjectLiteral(objectLiteral)) return typeInferenceForExpression(objectLiteral, /*diagMessage*/ undefined);
 
             const properties: TypeElement[] = [];
@@ -1205,14 +1218,14 @@ export function transformDeclarations(context: TransformationContext) {
                 let newProp;
                 switch (prop.kind) {
                     case SyntaxKind.MethodDeclaration:
-                        newProp = transformMethodDeclarationToSignature(prop, name, inferenceFlags);
+                        newProp = typeFromMethodDeclaration(prop, name, inferenceFlags);
                         break;
                     case SyntaxKind.PropertyAssignment:
-                        newProp = transformPropertyAssignment(prop, name, inferenceFlags);
+                        newProp = typeFromPropertyAssignment(prop, name, inferenceFlags);
                         break;
                     case SyntaxKind.SetAccessor:
                     case SyntaxKind.GetAccessor:
-                        newProp = transformAccessor(prop, name);
+                        newProp = typeFromAccessor(prop, name);
                         break;
                 }
                 if (newProp) {
@@ -1224,11 +1237,11 @@ export function transformDeclarations(context: TransformationContext) {
             return factory.createTypeLiteralNode(properties);
         }
 
-        function transformPropertyAssignment(prop: PropertyAssignment, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
+        function typeFromPropertyAssignment(prop: PropertyAssignment, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
             const modifiers = inferenceFlags & InitializeTransformNarrowBehavior.AsConst ?
                 [factory.createModifier(SyntaxKind.ReadonlyKeyword)] :
                 [];
-            const typeNode = transformExpressionToTypeNode(prop.initializer, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals) ?? typeInferenceForVariableLike(prop, p => createExpressionError(p.initializer));
+            const typeNode = typeFromExpression(prop.initializer, inferenceFlags & InitializeTransformNarrowBehavior.NotKeepLiterals) ?? typeInferenceForVariableLike(prop, p => createExpressionError(p.initializer));
             return factory.createPropertySignature(
                 modifiers,
                 name,
@@ -1236,7 +1249,7 @@ export function transformDeclarations(context: TransformationContext) {
                 typeNode,
             );
         }
-        function transformMethodDeclarationToSignature(method: MethodDeclaration, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
+        function typeFromMethodDeclaration(method: MethodDeclaration, name: PropertyName, inferenceFlags: InitializeTransformNarrowBehavior) {
             const oldEnclosingDeclaration = enclosingDeclaration;
             enclosingDeclaration = method;
             try {
@@ -1274,7 +1287,7 @@ export function transformDeclarations(context: TransformationContext) {
             }
         }
 
-        function transformAccessor(accessor: GetAccessorDeclaration | SetAccessorDeclaration, name: PropertyName) {
+        function typeFromAccessor(accessor: GetAccessorDeclaration | SetAccessorDeclaration, name: PropertyName) {
             const allAccessors = resolver.getAllAccessorDeclarations(accessor);
             const getAccessorType = allAccessors.getAccessor && getTypeAnnotationFromAccessor(allAccessors.getAccessor);
             const setAccessorType = allAccessors.setAccessor && getTypeAnnotationFromAccessor(allAccessors.setAccessor);
@@ -1323,7 +1336,7 @@ export function transformDeclarations(context: TransformationContext) {
                 return factory.createKeywordTypeNode(SyntaxKind.AnyKeyword);
             }
         }
-        function transformPrimitiveLiteralToType(node: PrimitiveLiteral, baseType: string | KeywordTypeSyntaxKind, narrowBehavior: InitializeTransformNarrowBehavior) {
+        function typeFromPrimitiveLiteral(node: PrimitiveLiteral, baseType: string | KeywordTypeSyntaxKind, narrowBehavior: InitializeTransformNarrowBehavior) {
             if (narrowBehavior & InitializeTransformNarrowBehavior.AsConstOrKeepLiterals) {
                 return factory.createLiteralTypeNode(clonePrimitiveLiteralValue(node));
             }
@@ -1351,7 +1364,7 @@ export function transformDeclarations(context: TransformationContext) {
                 factory.createKeywordTypeNode(SyntaxKind.UndefinedKeyword),
             ]);
         }
-        function transformVariableInitializerToTypeNode(node: VariableDeclaration, type: TypeNode | undefined) {
+        function typeFromVariable(node: VariableDeclaration, type: TypeNode | undefined) {
             const firstDeclaration = node.symbol.valueDeclaration;
             // Use first declaration of variable for the type
             if (node !== firstDeclaration && firstDeclaration && isVariableDeclaration(firstDeclaration)) {
@@ -1389,13 +1402,13 @@ export function transformDeclarations(context: TransformationContext) {
                     return typeInferenceForVariableLike(node, /*diagMessage*/ undefined);
                 }
                 else {
-                    return transformExpressionToTypeNode(node.initializer, node.parent.flags & NodeFlags.Const ? InitializeTransformNarrowBehavior.KeepLiterals : InitializeTransformNarrowBehavior.None)
+                    return typeFromExpression(node.initializer, node.parent.flags & NodeFlags.Const ? InitializeTransformNarrowBehavior.KeepLiterals : InitializeTransformNarrowBehavior.None)
                         ?? typeInferenceForVariableLike(node, createVariableOrPropertyError);
                 }
             }
             return typeInferenceForVariableLike(node, createVariableOrPropertyError);
         }
-        function transformParameterInitializerToTypeNode(node: ParameterDeclaration, type: TypeNode | undefined) {
+        function typeFromParameter(node: ParameterDeclaration, type: TypeNode | undefined) {
             const addUndefined = resolver.requiresAddingImplicitUndefined(node);
             if (addUndefined || (!type && !(node.initializer && isIdentifier(node.name)))) {
                 if (isolatedDeclarations) {
@@ -1406,11 +1419,11 @@ export function transformDeclarations(context: TransformationContext) {
                 return visitTypeNode(type);
             }
             else if (node.initializer) {
-                return transformExpressionToTypeNode(node.initializer) ?? typeInferenceForVariableLike(node, n => createExpressionError(n.initializer!));
+                return typeFromExpression(node.initializer) ?? typeInferenceForVariableLike(node, n => createExpressionError(n.initializer!));
             }
             return typeInferenceForVariableLike(node, createParameterError, addUndefined);
         }
-        function transformPropertyToTypeNode(node: PropertyDeclaration, type: TypeNode | undefined) {
+        function typeFromProperty(node: PropertyDeclaration, type: TypeNode | undefined) {
             if (type) {
                 return visitTypeNode(type);
             }
@@ -1418,7 +1431,7 @@ export function transformDeclarations(context: TransformationContext) {
                 let resultNode;
                 const optionalFlags = isOptionalDeclaration(node) ? InitializeTransformNarrowBehavior.NoTypeReferences : InitializeTransformNarrowBehavior.None;
                 const readonlyFlags = hasEffectiveReadonlyModifier(node) ? InitializeTransformNarrowBehavior.KeepLiterals : InitializeTransformNarrowBehavior.None;
-                resultNode = transformExpressionToTypeNode(node.initializer, optionalFlags | readonlyFlags) ?? typeInferenceForVariableLike(node, createVariableOrPropertyError);
+                resultNode = typeFromExpression(node.initializer, optionalFlags | readonlyFlags) ?? typeInferenceForVariableLike(node, createVariableOrPropertyError);
                 if (optionalFlags && resultNode) {
                     resultNode = addUndefinedInUnion(resultNode);
                 }

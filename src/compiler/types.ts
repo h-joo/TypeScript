@@ -1385,19 +1385,6 @@ export type HasIllegalModifiers =
     | NamespaceExportDeclaration;
 
 /** @internal */
-export type HasInferredType =
-    | FunctionDeclaration
-    | MethodDeclaration
-    | GetAccessorDeclaration
-    | BindingElement
-    | ConstructSignatureDeclaration
-    | VariableDeclaration
-    | MethodSignature
-    | CallSignatureDeclaration
-    | ParameterDeclaration
-    | PropertyDeclaration
-    | PropertySignature;
-/** @internal */
 export type PrimitiveLiteral =
     | BooleanLiteral
     | NumericLiteral
